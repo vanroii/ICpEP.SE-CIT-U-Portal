@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+/* ICpEP.SE CIT-U Chapter Brand System */
+@theme {
+  --color-brand: #1ca7e0;
+  --color-brand-dark: #0a7db0;
+  --color-brand-tint: #e3f6fc;
+  
+  --color-ink: #1b1613;
+  --color-ink-700: #45403d;
+  --color-ink-500: #8c8785;
+
+  --color-neutral-200: #e0dedb;
+  --color-neutral-600: #736e6b;
+
+  --color-border-default: #e0dedb;
+  --color-surface: #f8f8f7;
+  --color-surface-white: #ffffff;
+
+  --color-status-success: #218c54;
+  --color-status-success-bg: #e6f7eb;
+
+  --color-status-warning: #9e700a;
+  --color-status-warning-bg: #fcf0d4;
+
+  --color-status-danger: #bf2626;
+  --color-status-danger-bg: #fae6e6;
+  
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.10);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.14);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border-default);
+  }
+  body {
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Inter, Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+/* Custom interactive and animation helpers */
+.hover-lift {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.brand-gradient {
+  background: linear-gradient(135deg, #1ca7e0 0%, #0a7db0 100%);
+}
+
+.brand-hero-gradient {
+  background: linear-gradient(145deg, #1b1613 0%, #2a2420 60%, #0a4d6f 100%);
+}
