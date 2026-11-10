@@ -1,401 +1,301 @@
-import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { CreateEventModal } from "./CreateEventModal";
-import { CreatePostModal } from "./CreatePostModal";
-import { ReviewApplicationModal } from "./ReviewApplicationModal";
-import { updateEventStatusAction } from "./actions";
+"use client";
+
+import React, { useState, Suspense } from "react";
+import { PortalShell } from "@/components/PortalShell";
+import { useSearchParams } from "next/navigation";
 import {
-  Calendar,
-  BookOpen,
-  Award,
-  BarChart3,
-  Users,
-  CheckCircle,
-  Clock,
-  Pin,
+  FileText,
+  ChevronDown,
   ArrowUpRight,
+  TrendingUp,
+  Download,
 } from "lucide-react";
 
-export const dynamic = "force-dynamic";
+export default function OfficerPortalPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#F8F8F7] flex items-center justify-center text-[#514B47] text-sm font-medium">
+          Loading Officer Portal...
+        </div>
+      }
+    >
+      <OfficerContent />
+    </Suspense>
+  );
+}
 
-export default async function OfficerDashboardPage({
-  searchParams,
-}: {
-  searchParams?: Promise<{ tab?: string }>;
-}) {
-  const resolvedParams = searchParams ? await searchParams : {};
-  const activeTab = resolvedParams?.tab || "events";
+function OfficerContent() {
+  const searchParams = useSearchParams();
+  const tab = searchParams.get("tab") || "analytics";
 
-  let events: any[] = [];
-  let posts: any[] = [];
-  let applications: any[] = [];
-  let membershipReports: any[] = [];
-  let eventReports: any[] = [];
-
-  try {
-    const supabase = await createClient();
-    const [
-      { data: eventsData },
-      { data: postsData },
-      { data: appsData },
-      { data: memReports },
-      { data: evReports },
-    ] = await Promise.all([
-      supabase.from("events").select("*").order("created_at", { ascending: false }),
-      supabase.from("posts").select("*").order("created_at", { ascending: false }),
-      supabase
-        .from("membership_applications")
-        .select("*, applicant:applicant_id(first_name,last_name,student_number,email,program,year_level)")
-        .eq("status", "pending")
-        .order("submitted_at", { ascending: true }),
-      supabase.from("report_membership_counts").select("*"),
-      supabase.from("report_event_participation").select("*"),
-    ]);
-
-    events = eventsData ?? [];
-    posts = postsData ?? [];
-    applications = appsData ?? [];
-    membershipReports = memReports ?? [];
-    eventReports = evReports ?? [];
-  } catch {
-    // offline fallback
-  }
-
-  // Fallback demo items if database has not yet been seeded
-  if (events.length === 0) {
-    events = [
-      {
-        id: 1,
-        title: "CpE General Assembly 2026: Innovate, Integrate, Inspire",
-        slug: "cpe-general-assembly-2026",
-        visibility: "public",
-        status: "published",
-        participant_count: 142,
-        capacity: 250,
-      },
-      {
-        id: 2,
-        title: "Embedded Systems & IoT Hands-On Workshop",
-        slug: "embedded-systems-iot-workshop-2026",
-        visibility: "members_only",
-        status: "published",
-        participant_count: 36,
-        capacity: 40,
-      },
-      {
-        id: 3,
-        title: "Wildcat Hackathon 2026: Solutions for Tomorrow",
-        slug: "wildcat-hackathon-2026",
-        visibility: "public",
-        status: "draft",
-        participant_count: 0,
-        capacity: 120,
-      },
-    ];
-  }
-
-  if (posts.length === 0) {
-    posts = [
-      {
-        id: 1,
-        title: "Official Call for ICpEP.SE CIT-U Membership AY 2026–2027",
-        slug: "membership-call-ay-2026-2027",
-        post_type: "announcement",
-        status: "published",
-        is_pinned: true,
-      },
-      {
-        id: 2,
-        title: "CIT-U CpE Wildcats Secure Top Spots at National Robotics Challenge",
-        slug: "cpe-wildcats-robotics-challenge-victory",
-        post_type: "news",
-        status: "published",
-        is_pinned: false,
-      },
-    ];
-  }
-
-  const tabs = [
-    { id: "events", label: "Manage Events", count: events.length, icon: Calendar },
-    { id: "posts", label: "News & Posts", count: posts.length, icon: BookOpen },
-    { id: "membership", label: "Membership Verification", count: applications.length, icon: Award },
-    { id: "reports", label: "Chapter Reports", count: null, icon: BarChart3 },
+  const statCards = [
+    { value: "0", label: "ICpEP members" },
+    { value: "0", label: "Events held" },
+    { value: "0%", label: "Avg. participation" },
+    { value: "0", label: "Pending applications" },
   ];
 
+  const barChartData: Array<{ name: string; count: number; height: number }> = [];
+
+  const participationRows: Array<{
+    event: string;
+    date: string;
+    reg: string;
+    att: string;
+    rate: string;
+  }> = [];
+
+  const activityLogs: Array<{
+    time: string;
+    user: string;
+    role: string;
+    action: string;
+  }> = [];
+
   return (
-    <div className="space-y-8">
-      {/* Officer Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-[#1b1613] via-[#1d2633] to-[#0a7db0] text-white shadow-md">
-        <div className="space-y-1.5">
-          <div className="inline-flex items-center gap-2">
-            <span className="text-xl sm:text-2xl font-black">Officer Control Center</span>
-            <Badge tone="info" className="bg-[#1ca7e0]/20 text-[#1ca7e0] border-transparent font-bold">
-              ICpEP Executive Board
-            </Badge>
+    <PortalShell activeItem="Analytics and Reports" role="officer">
+      <div className="space-y-7">
+        {/* Page Header (1096x62, §8.2) */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1.5">
+            <h1 className="text-[30px] leading-[38px] font-bold text-[#1C1713] tracking-[-0.5px]">
+              Analytics and Reports
+            </h1>
+            <p className="text-[15px] text-[#817B77]">
+              Overview of membership, events, and activity.
+            </p>
           </div>
-          <p className="text-xs text-white/70">
-            Publish chapter circulars, manage event logistics, verify membership submissions, and review real-time analytics.
-          </p>
-        </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          <CreateEventModal />
-          <CreatePostModal />
-        </div>
-      </div>
+          <div className="flex items-center gap-3">
+            {/* Month selector */}
+            <div className="h-[34px] px-3 rounded-[10px] bg-white border border-[#C9C5C2] flex items-center gap-2 text-[13px] font-medium text-[#3D3733] cursor-pointer">
+              <span>October 2026</span>
+              <ChevronDown className="w-3.5 h-3.5 text-[#928C88]" />
+            </div>
 
-      {/* Tab Navigation */}
-      <div className="flex overflow-x-auto gap-2 border-b border-[#e0dedb] pb-2">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <Link
-              key={tab.id}
-              href={`/officer?tab=${tab.id}`}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
-                isActive
-                  ? "bg-[#1ca7e0] text-[#1b1613] shadow-xs"
-                  : "bg-white text-[#45403d] border border-[#e0dedb] hover:bg-[#f8f8f7]"
-              }`}
+            {/* Export PDF Button */}
+            <button
+              onClick={() => alert("Report exported")}
+              className="h-[43px] px-[22px] rounded-[8px] border-[1.5px] border-[#0087B5] text-[#0087B5] hover:bg-[#E3F6FC] text-[14px] font-semibold transition-colors flex items-center gap-2"
             >
-              <Icon className="w-4 h-4" />
-              <span>{tab.label}</span>
-              {typeof tab.count === "number" && (
-                <span
-                  className={`px-1.5 py-0.5 rounded-full text-[10px] ${
-                    isActive ? "bg-white/30 text-[#1b1613]" : "bg-[#f0eeeb] text-[#8c8785]"
-                  }`}
-                >
-                  {tab.count}
-                </span>
-              )}
-            </Link>
-          );
-        })}
-      </div>
-
-      {/* Tab 1: Manage Events */}
-      {activeTab === "events" && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-[#1b1613]">Chapter Events Roster</h2>
-            <CreateEventModal />
-          </div>
-
-          <div className="rounded-2xl border border-[#e0dedb] bg-white divide-y divide-[#f0eeeb] overflow-hidden">
-            {events.map((e) => (
-              <div key={e.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[#f8f8f7] transition-colors">
-                <div className="space-y-1.5 flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <Badge tone={e.status === "published" ? "success" : "neutral"} className="capitalize">
-                      {e.status}
-                    </Badge>
-                    <Badge tone={e.visibility === "members_only" ? "warning" : "info"}>
-                      {e.visibility === "members_only" ? "Members Only" : "Public"}
-                    </Badge>
-                  </div>
-                  <h3 className="font-bold text-sm sm:text-base text-[#1b1613] truncate">{e.title}</h3>
-                  <p className="text-xs text-[#8c8785]">
-                    Attendance: <span className="font-semibold text-[#1b1613]">{e.participant_count}</span>
-                    {e.capacity ? ` / ${e.capacity} max slots` : " (Unlimited)"}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <Link href={`/events/${e.slug}`} className="text-xs text-[#0a7db0] font-semibold hover:underline flex items-center gap-1">
-                    Public View <ArrowUpRight className="w-3.5 h-3.5" />
-                  </Link>
-
-                  {e.status === "draft" && (
-                    <form action={async () => { "use server"; await updateEventStatusAction(e.id, "published"); }}>
-                      <Button size="sm" variant="primary" type="submit">Publish</Button>
-                    </form>
-                  )}
-                  {e.status === "published" && (
-                    <form action={async () => { "use server"; await updateEventStatusAction(e.id, "archived"); }}>
-                      <Button size="sm" variant="ghost" type="submit">Archive</Button>
-                    </form>
-                  )}
-                  {e.status === "archived" && (
-                    <form action={async () => { "use server"; await updateEventStatusAction(e.id, "published"); }}>
-                      <Button size="sm" variant="secondary" type="submit">Re-publish</Button>
-                    </form>
-                  )}
-                </div>
-              </div>
-            ))}
+              <Download className="w-4 h-4" />
+              <span>Export PDF</span>
+            </button>
           </div>
         </div>
-      )}
 
-      {/* Tab 2: News & Posts */}
-      {activeTab === "posts" && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-[#1b1613]">News & Circulars</h2>
-            <CreatePostModal />
-          </div>
-
-          <div className="rounded-2xl border border-[#e0dedb] bg-white divide-y divide-[#f0eeeb] overflow-hidden">
-            {posts.map((p) => (
-              <div key={p.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[#f8f8f7] transition-colors">
-                <div className="space-y-1.5 flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <Badge tone="info" className="capitalize">{p.post_type}</Badge>
-                    <Badge tone={p.status === "published" ? "success" : "neutral"} className="capitalize">
-                      {p.status}
-                    </Badge>
-                    {p.is_pinned && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#bf2626] bg-[#fae6e6] px-2 py-0.5 rounded-full">
-                        <Pin className="w-3 h-3" /> Pinned
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="font-bold text-sm sm:text-base text-[#1b1613] truncate">{p.title}</h3>
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <Link href={`/news/${p.slug}`} className="text-xs text-[#0a7db0] font-semibold hover:underline flex items-center gap-1">
-                    Read Post <ArrowUpRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Tab 3: Membership Verification */}
-      {activeTab === "membership" && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-bold text-[#1b1613]">Pending Membership Applications</h2>
-              <p className="text-xs text-[#8c8785]">
-                Review student verification requests for AY 2026–2027 (FR-07).
+        {/* 4 Stat Cards Row (1096x109) */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {statCards.map((stat) => (
+            <div
+              key={stat.label}
+              className="bg-white border border-[#DEDBD8] rounded-[14px] p-[22px_24px] space-y-1.5"
+            >
+              <p className="text-[34px] leading-[40px] font-bold tracking-[-0.5px] text-[#0087B5]">
+                {stat.value}
               </p>
+              <p className="text-[14px] font-medium text-[#817B77]">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Charts Row: Bar Chart (692px) + Breakdown (380px) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Bar Chart */}
+          <div className="lg:col-span-8 bg-white border border-[#DEDBD8] rounded-[16px] p-[22px_24px] space-y-5">
+            <div className="flex items-center justify-between">
+              <h3 className="text-[18px] font-semibold text-[#1C1713]">
+                Event participation (attended)
+              </h3>
+              <span className="text-[14px] font-semibold text-[#0087B5]">
+                Last 6 events
+              </span>
+            </div>
+
+            {/* Bars */}
+            <div className="h-[210px] border-b border-[#DEDBD8] flex items-end justify-between px-4 pb-2">
+              {barChartData.length > 0 ? (
+                barChartData.map((bar) => (
+                  <div
+                    key={bar.name}
+                    className="flex flex-col items-center gap-2 group w-[52px]"
+                  >
+                    <span className="text-[12px] font-semibold text-[#817B77]">
+                      {bar.count}
+                    </span>
+                    <div
+                      style={{ height: `${bar.height}px` }}
+                      className="w-[52px] bg-[#19A7D5] rounded-t-[8px] group-hover:bg-[#1695bf] transition-all"
+                    />
+                    <span className="text-[11px] font-medium text-[#817B77] truncate w-full text-center">
+                      {bar.name}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-[14px] text-[#817B77]">
+                  No event participation data recorded yet.
+                </div>
+              )}
             </div>
           </div>
 
-          {applications.length > 0 ? (
-            <div className="rounded-2xl border border-[#e0dedb] bg-white divide-y divide-[#f0eeeb] overflow-hidden">
-              {applications.map((app) => (
-                <div key={app.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[#f8f8f7] transition-colors">
-                  <div className="space-y-1 flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-sm text-[#1b1613]">
-                        {app.applicant?.first_name} {app.applicant?.last_name}
-                      </span>
-                      <Badge tone="warning">Pending Approval</Badge>
-                    </div>
-                    <p className="text-xs text-[#8c8785]">
-                      Student No: <span className="font-mono text-[#1b1613]">{app.applicant?.student_number || "—"}</span> · Email: {app.applicant?.email}
-                    </p>
-                    <p className="text-xs text-[#0a7db0] font-semibold">
-                      Claimed ID: {app.claimed_membership_no || "New Member (No reference)"}
-                    </p>
-                  </div>
+          {/* Membership Breakdown */}
+          <div className="lg:col-span-4 bg-white border border-[#DEDBD8] rounded-[16px] p-[22px_24px] space-y-5">
+            <h3 className="text-[18px] font-semibold text-[#1C1713]">
+              Membership breakdown
+            </h3>
 
-                  <div className="shrink-0">
-                    <ReviewApplicationModal application={app} />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex justify-between text-[14px]">
+                  <span className="font-medium text-[#3D3733]">ICpEP members</span>
+                  <span className="font-semibold text-[#1C1713]">0</span>
+                </div>
+                <div className="w-full h-2.5 rounded-full bg-[#DEDBD8] overflow-hidden">
+                  <div className="h-full bg-[#19A7D5] rounded-full" style={{ width: "0%" }} />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between text-[14px]">
+                  <span className="font-medium text-[#3D3733]">Non-members</span>
+                  <span className="font-semibold text-[#1C1713]">0</span>
+                </div>
+                <div className="w-full h-2.5 rounded-full bg-[#DEDBD8] overflow-hidden">
+                  <div className="h-full bg-[#19A7D5] rounded-full" style={{ width: "0%" }} />
+                </div>
+              </div>
+            </div>
+
+            <p className="text-[13px] text-[#817B77] pt-2">
+              0 registered CpE students in total
+            </p>
+          </div>
+        </div>
+
+        {/* Content Row: Participation Table (692px) + Year Level Breakdown (380px) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Table */}
+          <div className="lg:col-span-8 bg-white border border-[#DEDBD8] rounded-[16px] p-[22px_24px] space-y-4">
+            <h3 className="text-[18px] font-semibold text-[#1C1713]">
+              Event participation
+            </h3>
+
+            <div className="border border-[#DEDBD8] rounded-[10px] overflow-x-auto">
+              <table className="w-full text-left text-[14px]">
+                <thead className="bg-[#FAF9F8] text-[11px] font-bold text-[#817B77] tracking-[0.6px] uppercase border-b border-[#DEDBD8]">
+                  <tr>
+                    <th className="py-2.5 px-4">EVENT</th>
+                    <th className="py-2.5 px-3">DATE</th>
+                    <th className="py-2.5 px-3">REGISTERED</th>
+                    <th className="py-2.5 px-3">ATTENDED</th>
+                    <th className="py-2.5 px-3">RATE</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#EEECEA]">
+                  {participationRows.length > 0 ? (
+                    participationRows.map((r, i) => (
+                      <tr key={i} className="hover:bg-[#FAF9F8]">
+                        <td className="py-3 px-4 font-semibold text-[#1C1713]">
+                          {r.event}
+                        </td>
+                        <td className="py-3 px-3 text-[#514B47]">{r.date}</td>
+                        <td className="py-3 px-3 text-[#514B47]">{r.reg}</td>
+                        <td className="py-3 px-3 text-[#514B47]">{r.att}</td>
+                        <td className="py-3 px-3 text-[#514B47] font-medium">
+                          {r.rate}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-[#817B77]">
+                        No event participation data recorded yet.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Members by Year Level */}
+          <div className="lg:col-span-4 bg-white border border-[#DEDBD8] rounded-[16px] p-[22px_24px] space-y-4">
+            <h3 className="text-[18px] font-semibold text-[#1C1713]">
+              Members by year level
+            </h3>
+
+            <div className="space-y-4">
+              {[
+                { year: "1st year", count: "0", pct: "0%" },
+                { year: "2nd year", count: "0", pct: "0%" },
+                { year: "3rd year", count: "0", pct: "0%" },
+                { year: "4th year", count: "0", pct: "0%" },
+              ].map((y) => (
+                <div key={y.year} className="space-y-2">
+                  <div className="flex justify-between text-[14px]">
+                    <span className="font-medium text-[#3D3733]">{y.year}</span>
+                    <span className="font-semibold text-[#1C1713]">{y.count}</span>
+                  </div>
+                  <div className="w-full h-2.5 rounded-full bg-[#DEDBD8] overflow-hidden">
+                    <div
+                      className="h-full bg-[#19A7D5] rounded-full"
+                      style={{ width: y.pct }}
+                    />
                   </div>
                 </div>
               ))}
             </div>
-          ) : (
-            <div className="rounded-2xl border border-[#e0dedb] bg-white p-12 text-center space-y-2">
-              <CheckCircle className="w-10 h-10 text-[#218c54] mx-auto opacity-70" />
-              <h3 className="font-bold text-base text-[#1b1613]">All Applications Cleared</h3>
-              <p className="text-xs text-[#8c8785]">
-                There are currently no pending membership applications awaiting review.
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Tab 4: Chapter Reports (SR-07) */}
-      {activeTab === "reports" && (
-        <div className="space-y-6">
-          <div className="space-y-1">
-            <h2 className="text-lg font-bold text-[#1b1613]">Chapter Analytics & Oversight Reports</h2>
-            <p className="text-xs text-[#8c8785]">
-              Real-time rollups from database views `report_membership_counts` and `report_event_participation`.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Membership Counts View */}
-            <div className="rounded-2xl border border-[#e0dedb] bg-white p-6 space-y-4">
-              <h3 className="font-bold text-base text-[#1b1613] flex items-center gap-2">
-                <Users className="w-5 h-5 text-[#0a7db0]" />
-                Membership Enrollment by School Year
-              </h3>
-              <div className="space-y-2 text-xs">
-                {membershipReports.length > 0 ? (
-                  membershipReports.map((r, i) => (
-                    <div key={i} className="flex items-center justify-between py-2 border-b border-[#f0eeeb]">
-                      <span>{r.school_year} ({r.status})</span>
-                      <span className="font-bold text-[#0a7db0]">{r.total} members</span>
-                    </div>
-                  ))
-                ) : (
-                  <div className="space-y-2 text-xs text-[#8c8785]">
-                    <div className="flex justify-between py-2 border-b border-[#f0eeeb]">
-                      <span>AY 2026–2027 (Active)</span>
-                      <span className="font-bold text-[#0a7db0]">342 verified</span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-[#f0eeeb]">
-                      <span>AY 2025–2026 (Expired)</span>
-                      <span className="font-bold text-[#8c8785]">289 members</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Event Participation View */}
-            <div className="rounded-2xl border border-[#e0dedb] bg-white p-6 space-y-4">
-              <h3 className="font-bold text-base text-[#1b1613] flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-[#0a7db0]" />
-                Event Attendance & Capacity Ratios
-              </h3>
-              <div className="space-y-2 text-xs">
-                {eventReports.length > 0 ? (
-                  eventReports.map((r, i) => (
-                    <div key={i} className="py-2 border-b border-[#f0eeeb] space-y-1">
-                      <div className="flex justify-between font-bold text-[#1b1613]">
-                        <span className="truncate">{r.title}</span>
-                        <span>{r.registered} reg</span>
-                      </div>
-                      <div className="flex justify-between text-[#8c8785] text-[11px]">
-                        <span>Capacity: {r.capacity || "Unlimited"}</span>
-                        <span>Cancelled: {r.cancelled || 0}</span>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="space-y-2 text-xs text-[#8c8785]">
-                    <div className="py-2 border-b border-[#f0eeeb] space-y-1">
-                      <div className="flex justify-between font-bold text-[#1b1613]">
-                        <span>CpE General Assembly 2026</span>
-                        <span>142 reg</span>
-                      </div>
-                      <div className="flex justify-between text-[#8c8785] text-[11px]">
-                        <span>Capacity: 250</span>
-                        <span>Cancelled: 4</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
         </div>
-      )}
-    </div>
+
+        {/* Activity Log (1096x401) */}
+        <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-[22px_24px] space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-[18px] font-semibold text-[#1C1713]">
+              Activity log
+            </h3>
+            <span className="text-[14px] font-semibold text-[#0087B5]">
+              Last 7 days
+            </span>
+          </div>
+
+          <div className="border border-[#DEDBD8] rounded-[10px] overflow-x-auto">
+            <table className="w-full text-left text-[14px]">
+              <thead className="bg-[#FAF9F8] text-[11px] font-bold text-[#817B77] tracking-[0.6px] uppercase border-b border-[#DEDBD8]">
+                <tr>
+                  <th className="py-2.5 px-4">TIME</th>
+                  <th className="py-2.5 px-4">USER</th>
+                  <th className="py-2.5 px-4">ROLE</th>
+                  <th className="py-2.5 px-4">ACTION</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#EEECEA]">
+                {activityLogs.length > 0 ? (
+                  activityLogs.map((log, i) => (
+                    <tr key={i} className="hover:bg-[#FAF9F8]">
+                      <td className="py-3.5 px-4 font-semibold text-[#1C1713] whitespace-nowrap">
+                        {log.time}
+                      </td>
+                      <td className="py-3.5 px-4 text-[#514B47]">{log.user}</td>
+                      <td className="py-3.5 px-4 text-[#514B47]">{log.role}</td>
+                      <td className="py-3.5 px-4 text-[#514B47]">{log.action}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="py-8 text-center text-[#817B77]">
+                      No activity logs recorded.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </PortalShell>
   );
 }

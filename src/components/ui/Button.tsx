@@ -1,30 +1,48 @@
 import React from "react";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "ghost" | "danger";
-  size?: "sm" | "md";
+  variant?: "primary" | "accent" | "secondary" | "on-dark" | "outline" | "ghost" | "danger";
+  size?: "sm" | "md" | "lg";
   isLoading?: boolean;
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ children, variant = "primary", size = "md", isLoading, className = "", disabled, ...props }, ref) => {
+  (
+    {
+      children,
+      variant = "primary",
+      size = "md",
+      isLoading,
+      className = "",
+      disabled,
+      ...props
+    },
+    ref
+  ) => {
     const baseStyles =
-      "inline-flex items-center justify-center font-semibold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:pointer-events-none cursor-pointer";
+      "inline-flex items-center justify-center font-semibold rounded-[8px] transition-colors focus:outline-none focus:ring-2 focus:ring-[#19A7D5] focus:ring-offset-1 disabled:opacity-50 disabled:pointer-events-none cursor-pointer whitespace-nowrap";
 
     const sizeStyles = {
-      sm: "px-4 py-2 text-xs gap-1.5",
-      md: "px-5 py-2.5 text-sm gap-2",
+      sm: "px-[14px] py-[8px] text-[13px] h-[34px]",
+      md: "px-[22px] py-[13px] text-[14px] leading-tight h-[43px]",
+      lg: "px-[24px] py-[14px] text-[15px] h-[48px]",
     };
 
     const variantStyles = {
       primary:
-        "bg-[#1ca7e0] text-[#1b1613] hover:bg-[#1898cc] active:bg-[#1483b0] focus:ring-[#1ca7e0] shadow-sm",
+        "bg-[#19A7D5] text-[#12191C] hover:bg-[#1695bf] active:bg-[#1383a8] font-semibold",
+      accent:
+        "bg-[#19A7D5] text-[#12191C] hover:bg-[#1695bf] active:bg-[#1383a8] font-semibold",
       secondary:
-        "bg-white border border-[#1ca7e0] text-[#0a7db0] hover:bg-[#e3f6fc] active:bg-[#d0f0fa] focus:ring-[#1ca7e0]",
+        "bg-transparent border-[1.5px] border-[#0087B5] text-[#0087B5] hover:bg-[#E3F6FC] font-semibold",
+      "on-dark":
+        "bg-transparent border-[1.5px] border-[#FFFFFF] text-[#FFFFFF] hover:bg-white/10 font-semibold",
+      outline:
+        "bg-white border border-[#C9C5C2] text-[#0087B5] hover:bg-[#FAF9F8] font-semibold",
       ghost:
-        "bg-transparent text-[#0a7db0] hover:bg-[#e3f6fc] active:bg-[#d0f0fa] focus:ring-[#1ca7e0]",
+        "bg-transparent text-[#0087B5] hover:bg-[#E3F6FC] font-semibold",
       danger:
-        "bg-[#bf2626] text-white hover:bg-[#a92121] active:bg-[#911b1b] focus:ring-[#bf2626]",
+        "bg-transparent border border-[#FCA5A5] text-[#B91C1C] hover:bg-[#FEE2E2] font-semibold",
     };
 
     return (
