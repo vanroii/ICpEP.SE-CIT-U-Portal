@@ -1,198 +1,164 @@
-import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
-import { Badge } from "@/components/ui/Badge";
-import { BookOpen, Search, Pin, Calendar, ArrowRight } from "lucide-react";
+"use client";
 
-export const dynamic = "force-dynamic";
+import React, { useState } from "react";
+import { PortalShell } from "@/components/PortalShell";
+import { Pin, ArrowRight } from "lucide-react";
 
-export default async function NewsPage({
-  searchParams,
-}: {
-  searchParams?: Promise<{ category?: string; q?: string }>;
-}) {
-  const resolvedSearchParams = searchParams ? await searchParams : {};
-  const category = resolvedSearchParams?.category || "all";
-  const query = (resolvedSearchParams?.q || "").toLowerCase();
+export default function AnnouncementsPage() {
+  const [filter, setFilter] = useState("All");
+  const [announcements, setAnnouncements] = useState<
+    Array<{
+      id: number;
+      isPinned: boolean;
+      category: string;
+      categoryBg: string;
+      categoryColor: string;
+      time: string;
+      title: string;
+      body: string;
+      authorInitial: string;
+      authorRole: string;
+    }>
+  >([]);
 
-  let posts: any[] = [];
-
-  try {
-    const supabase = await createClient();
-    let queryBuilder = supabase
-      .from("posts")
-      .select("id,title,slug,post_type,summary,body,is_pinned,published_at")
-      .eq("status", "published")
-      .order("is_pinned", { ascending: false })
-      .order("published_at", { ascending: false });
-
-    if (category !== "all") {
-      queryBuilder = queryBuilder.eq("post_type", category);
-    }
-
-    const { data } = await queryBuilder;
-    posts = data ?? [];
-  } catch {
-    // offline fallback
-  }
-
-  const fallbackPosts = [
-    {
-      id: 1,
-      title: "Official Call for ICpEP.SE CIT-U Membership AY 2026–2027",
-      slug: "membership-call-ay-2026-2027",
-      post_type: "announcement",
-      summary:
-        "Registration and renewal for the ICpEP.SE Student Chapter are now officially open. Learn about member benefits, exclusive seminars, and technical workshops.",
-      is_pinned: true,
-      published_at: "2026-09-20T10:00:00+08:00",
-    },
-    {
-      id: 2,
-      title: "CIT-U CpE Wildcats Secure Top Spots at National Robotics Challenge",
-      slug: "cpe-wildcats-robotics-challenge-victory",
-      post_type: "news",
-      summary:
-        "Our chapter delegation emerged victorious, securing 1st and 3rd runners-up in Autonomous Rover and Micro-controller Innovation categories.",
-      is_pinned: false,
-      published_at: "2026-09-15T14:30:00+08:00",
-    },
-    {
-      id: 3,
-      title: "ICpEP.SE Student Lounge & Laboratory Access Guidelines",
-      slug: "student-lounge-lab-guidelines-update",
-      post_type: "update",
-      summary:
-        "Updated laboratory safety protocols, tool checkout procedures, and collaborative workspace reservations for CpE students.",
-      is_pinned: false,
-      published_at: "2026-09-10T09:15:00+08:00",
-    },
-    {
-      id: 4,
-      title: "CpE Peer Mentorship Program: Tutor Application Open",
-      slug: "cpe-peer-mentorship-application-2026",
-      post_type: "announcement",
-      summary:
-        "Upperclassmen students proficient in Logic Circuits, Data Structures, and Microprocessor Systems are invited to apply as student peer tutors.",
-      is_pinned: false,
-      published_at: "2026-09-05T11:00:00+08:00",
-    },
+  const categories = [
+    { label: "All", count: announcements.length },
+    { label: "Organization", count: announcements.filter((a) => a.category === "Organization").length },
+    { label: "Academic", count: announcements.filter((a) => a.category === "Academic").length },
+    { label: "Events", count: announcements.filter((a) => a.category === "Events").length },
+    { label: "Membership", count: announcements.filter((a) => a.category === "Membership").length },
   ];
 
-  const sourcePosts = posts.length > 0 ? posts : fallbackPosts;
-
-  const filteredPosts = sourcePosts.filter((p) => {
-    const matchesCategory = category === "all" || p.post_type === category;
-    const matchesQuery =
-      !query ||
-      p.title.toLowerCase().includes(query) ||
-      (p.summary && p.summary.toLowerCase().includes(query));
-
-    return matchesCategory && matchesQuery;
+  const filtered = announcements.filter((a) => {
+    if (filter === "All") return true;
+    return a.category.toLowerCase() === filter.toLowerCase();
   });
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-[#1b1613] flex items-center gap-2.5">
-          <BookOpen className="w-7 h-7 text-[#0a7db0]" />
-          News & Announcements
-        </h1>
-        <p className="text-sm text-[#8c8785] mt-1">
-          Stay informed on official chapter circulars, competition victories, and academic advisories.
-        </p>
-      </div>
+    <PortalShell activeItem="Announcements">
+      <div className="space-y-7">
+        {/* Page Header (1096x62, §6.3) */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1.5">
+            <h1 className="text-[30px] leading-[38px] font-bold text-[#1C1713] tracking-[-0.5px]">
+              Announcements
+            </h1>
+            <p className="text-[15px] text-[#817B77]">
+              News and updates from the ICpEP.SE officers.
+            </p>
+          </div>
 
-      {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-white border border-[#e0dedb]">
-        <div className="flex flex-wrap items-center gap-2">
-          {["all", "announcement", "news", "update"].map((c) => (
-            <a
-              key={c}
-              href={c === "all" ? "/news" : `/news?category=${c}`}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-colors ${
-                category === c
-                  ? "bg-[#1ca7e0] text-[#1b1613]"
-                  : "bg-[#f8f8f7] text-[#45403d] hover:bg-[#e0dedb]"
+          <button
+            onClick={() => alert("All notifications marked as read")}
+            className="text-[14px] font-semibold text-[#0087B5] hover:underline"
+          >
+            Mark all as read
+          </button>
+        </div>
+
+        {/* Filters (352x32 H10) */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {["All", "Organization", "Academic", "Events", "Membership"].map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setFilter(cat)}
+              className={`h-[32px] px-[14px] rounded-full text-[13px] font-semibold transition-colors ${
+                filter === cat
+                  ? "bg-[#19A7D5] text-[#12191C]"
+                  : "bg-white border border-[#DEDBD8] text-[#817B77] hover:text-[#1C1713]"
               }`}
             >
-              {c === "all" ? "All Posts" : c}
-            </a>
+              {cat}
+            </button>
           ))}
         </div>
 
-        <form method="get" className="relative min-w-[240px]">
-          <input type="hidden" name="category" value={category} />
-          <Search className="w-4 h-4 text-[#8c8785] absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            name="q"
-            defaultValue={query}
-            placeholder="Search news..."
-            className="w-full pl-9 pr-3.5 py-1.5 text-xs rounded-lg border border-[#e0dedb] bg-[#f8f8f7] text-[#1b1613] placeholder-[#8c8785] focus:outline-none focus:border-[#1ca7e0]"
-          />
-        </form>
-      </div>
-
-      {/* Posts List */}
-      <div className="space-y-4">
-        {filteredPosts.map((p) => (
-          <article
-            key={p.slug}
-            className="rounded-2xl border border-[#e0dedb] bg-white p-6 transition-all hover:border-[#1ca7e0]/60 hover:shadow-xs space-y-3"
-          >
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <Badge
-                  tone={
-                    p.post_type === "announcement"
-                      ? "info"
-                      : p.post_type === "news"
-                      ? "success"
-                      : "neutral"
-                  }
-                  className="capitalize font-semibold"
+        {/* Content Row (1096x884 H24) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Announcement List (752px = lg:col-span-8) */}
+          <div className="lg:col-span-8 space-y-4">
+            {filtered.length > 0 ? (
+              filtered.map((item) => (
+                <article
+                  key={item.id}
+                  className="bg-white border border-[#DEDBD8] rounded-[16px] p-[22px_24px] space-y-3"
                 >
-                  {p.post_type}
-                </Badge>
-                {p.is_pinned && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#bf2626] bg-[#fae6e6] px-2 py-0.5 rounded-full">
-                    <Pin className="w-3 h-3" />
-                    Pinned
-                  </span>
-                )}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {item.isPinned && <Pin className="w-3.5 h-3.5 text-[#9A6C00]" />}
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${item.categoryBg} ${item.categoryColor}`}
+                      >
+                        {item.category}
+                      </span>
+                    </div>
+                    <span className="text-[13px] text-[#928C88]">{item.time}</span>
+                  </div>
+
+                  <h3 className="text-[20px] leading-[28px] font-semibold text-[#1C1713]">
+                    {item.title}
+                  </h3>
+
+                  <p className="text-[15px] leading-[24px] text-[#817B77]">
+                    {item.body}
+                  </p>
+
+                  <div className="flex items-center justify-between pt-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-full bg-[#E3F6FC] text-[#0087B5] flex items-center justify-center font-bold text-[12px] shrink-0">
+                        {item.authorInitial}
+                      </div>
+                      <span className="text-[13px] text-[#817B77]">
+                        {item.authorRole}
+                      </span>
+                    </div>
+
+                    <button className="text-[14px] font-semibold text-[#0087B5] hover:underline flex items-center gap-1">
+                      <span>Read more</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-12 text-center space-y-2">
+                <p className="text-[16px] font-semibold text-[#1C1713]">
+                  No announcements yet
+                </p>
+                <p className="text-[14px] text-[#817B77] max-w-sm mx-auto">
+                  News, advisories, and chapter updates will be published here once available.
+                </p>
               </div>
-              <div className="flex items-center gap-1 text-xs text-[#8c8785]">
-                <Calendar className="w-3.5 h-3.5" />
-                <span>
-                  {new Date(p.published_at).toLocaleDateString("en-US", {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </span>
+            )}
+          </div>
+
+          {/* Side Column (320px = lg:col-span-4) */}
+          <div className="lg:col-span-4">
+            <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-[22px_24px] space-y-4">
+              <h3 className="text-[18px] font-semibold text-[#1C1713]">
+                Categories
+              </h3>
+
+              <div className="divide-y divide-[#EEECEA]">
+                {categories.map((c) => (
+                  <button
+                    key={c.label}
+                    onClick={() => setFilter(c.label)}
+                    className="w-full py-3.5 first:pt-1 flex items-center justify-between text-left hover:opacity-80 transition-opacity"
+                  >
+                    <span className="text-[14px] text-[#3D3733] font-normal">
+                      {c.label}
+                    </span>
+                    <span className="text-[14px] font-semibold text-[#0087B5]">
+                      {c.count}
+                    </span>
+                  </button>
+                ))}
               </div>
             </div>
-
-            <h2 className="text-lg font-bold text-[#1b1613] hover:text-[#0a7db0] transition-colors">
-              <Link href={`/news/${p.slug}`}>{p.title}</Link>
-            </h2>
-
-            <p className="text-xs sm:text-sm text-[#45403d] leading-relaxed">
-              {p.summary}
-            </p>
-
-            <div className="pt-2">
-              <Link
-                href={`/news/${p.slug}`}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0a7db0] hover:text-[#1ca7e0] transition-colors"
-              >
-                Read full announcement
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          </article>
-        ))}
+          </div>
+        </div>
       </div>
-    </div>
+    </PortalShell>
   );
 }

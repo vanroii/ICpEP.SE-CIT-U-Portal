@@ -8,18 +8,28 @@ export async function register(
 ) {
   const email = String(formData.get("email") || "").trim();
   const password = String(formData.get("password") || "");
-  const firstName = String(formData.get("first_name") || "").trim();
+  const confirmPassword = String(formData.get("confirm_password") || "");
+  const fullName = String(formData.get("full_name") || "").trim();
+  const nameParts = fullName.includes(",")
+    ? fullName.split(",").map((part) => part.trim())
+    : fullName.split(/\s+/).reverse();
+  const lastName = nameParts[0] || "";
+  const firstName = nameParts.slice(1).reverse().join(" ");
   const middleName = String(formData.get("middle_name") || "").trim();
-  const lastName = String(formData.get("last_name") || "").trim();
   const studentNumber = String(formData.get("student_number") || "").trim();
   const program = String(formData.get("program") || "BS Computer Engineering").trim();
-  const yearLevel = Number(formData.get("year_level") || 1);
+  const yearAndSection = String(formData.get("year_and_section") || "").trim();
+  const yearLevel = Number(yearAndSection.match(/-(\d+)$/)?.[1] || 0);
   const contactNumber = String(formData.get("contact_number") || "").trim();
   const claimsMembership = formData.get("claims_membership") === "on";
   const membershipNo = String(formData.get("membership_no") || "").trim();
 
-  if (!email || !password || !firstName || !lastName) {
+  if (!email || !password || !firstName || !lastName || !studentNumber || !yearLevel) {
     return { error: "Please complete all required fields." };
+  }
+
+  if (password !== confirmPassword) {
+    return { error: "Passwords do not match." };
   }
 
   if (password.length < 8) {
