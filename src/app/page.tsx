@@ -1,11 +1,14 @@
 import React from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 import { PublicNavbar } from "@/components/PublicNavbar";
 import { PublicFooter } from "@/components/PublicFooter";
 import { LogoLarge } from "@/components/ui/Logo";
 import { Code, Users, Shield, ArrowRight } from "lucide-react";
 
-export default function LandingHomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function LandingHomePage() {
   const featureCards = [
     {
       icon: Code,
@@ -24,12 +27,51 @@ export default function LandingHomePage() {
     },
   ];
 
-  const upcomingEvents: {
-    date: string;
-    title: string;
-    meta: string;
-    href: string;
-  }[] = [];
+  let events: any[] = [];
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("events")
+      .select("title,slug,start_at,venue,visibility,participant_count,capacity")
+      .eq("status", "published")
+      .order("start_at", { ascending: true })
+      .limit(3);
+    events = data ?? [];
+  } catch {
+    // offline fallback
+  }
+
+  const fallbackEvents = [
+    {
+      title: "CpE General Assembly 2026: Innovate, Integrate, Inspire",
+      slug: "cpe-general-assembly-2026",
+      start_at: "2026-11-20T13:00:00+08:00",
+      venue: "CIT-U Auditorium & Virtual Stream",
+      visibility: "public",
+      participant_count: 142,
+      capacity: 250,
+    },
+    {
+      title: "Embedded Systems & IoT Hands-On Workshop",
+      slug: "embedded-systems-iot-workshop-2026",
+      start_at: "2026-11-28T09:00:00+08:00",
+      venue: "CEA Building Lab 304",
+      visibility: "members_only",
+      participant_count: 36,
+      capacity: 40,
+    },
+    {
+      title: "Wildcat Hackathon 2026: Solutions for Tomorrow",
+      slug: "wildcat-hackathon-2026",
+      start_at: "2026-12-05T08:00:00+08:00",
+      venue: "CIT-U Innovation Hub",
+      visibility: "public",
+      participant_count: 88,
+      capacity: 120,
+    },
+  ];
+
+  const displayEvents = events.length > 0 ? events : fallbackEvents;
 
   return (
     <div className="w-full bg-[#F8F8F7] flex flex-col">
@@ -136,42 +178,60 @@ export default function LandingHomePage() {
                 </h2>
               </div>
               <Link
-                href="#events"
+                href="/events"
                 className="text-[15px] font-semibold text-[#0087B5] hover:underline whitespace-nowrap"
               >
                 View all events →
               </Link>
             </div>
 
-            {upcomingEvents.length > 0 ? (
+            {displayEvents.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {upcomingEvents.map((evt) => (
-                  <div
-                    key={evt.title}
-                    className="bg-white border border-[#DEDBD8] rounded-[14px] overflow-hidden flex flex-col"
-                  >
-                    {/* Event photo placeholder */}
-                    <div className="h-[176px] w-full event-photo-gradient flex items-center justify-center">
-                      <span className="text-[13px] font-medium text-[#E0F5FC]">
-                        Event photo
-                      </span>
-                    </div>
-                    {/* Body */}
-                    <div className="p-[18px_20px_22px_20px] space-y-2 flex-1 flex flex-col justify-between">
-                      <div>
-                        <p className="text-[12px] font-bold tracking-[0.6px] text-[#0087B5] uppercase">
-                          {evt.date}
-                        </p>
-                        <h4 className="text-[18px] leading-[26px] font-semibold text-[#1C1713] mt-1">
-                          {evt.title}
-                        </h4>
+                {displayEvents.map((evt) => {
+                  const startDate = new Date(evt.start_at);
+                  const dateStr = startDate.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  });
+                  return (
+                    <Link
+                      key={evt.slug || evt.title}
+                      href={`/events/${evt.slug}`}
+                      className="bg-white border border-[#DEDBD8] rounded-[14px] overflow-hidden flex flex-col hover:border-[#19A7D5] transition-colors group"
+                    >
+                      {/* Event photo placeholder */}
+                      <div className="h-[176px] w-full event-photo-gradient flex items-center justify-between p-4 text-white">
+                        <div className="bg-white/20 backdrop-blur-xs rounded-[10px] p-2 text-center min-w-[50px]">
+                          <span className="block text-[11px] font-bold uppercase tracking-wider">
+                            {startDate.toLocaleDateString("en-US", { month: "short" })}
+                          </span>
+                          <span className="block text-[20px] font-extrabold leading-tight">
+                            {startDate.getDate()}
+                          </span>
+                        </div>
+                        {evt.visibility === "members_only" && (
+                          <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#FEF3C7] text-[#B45309]">
+                            Members Only
+                          </span>
+                        )}
                       </div>
-                      <p className="text-[14px] leading-[20px] text-[#817B77] pt-1">
-                        {evt.meta}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                      {/* Body */}
+                      <div className="p-[18px_20px_22px_20px] space-y-2 flex-1 flex flex-col justify-between">
+                        <div>
+                          <p className="text-[12px] font-bold tracking-[0.6px] text-[#0087B5] uppercase">
+                            {dateStr} · {evt.venue || "CIT-U"}
+                          </p>
+                          <h4 className="text-[18px] leading-[26px] font-semibold text-[#1C1713] mt-1 group-hover:text-[#0087B5] transition-colors">
+                            {evt.title}
+                          </h4>
+                        </div>
+                        <p className="text-[14px] leading-[20px] text-[#817B77] pt-1">
+                          {evt.participant_count || 0} registered · {evt.capacity ? `Capacity ${evt.capacity}` : "Open admission"}
+                        </p>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             ) : (
               <div className="bg-white border border-[#DEDBD8] rounded-[14px] p-12 text-center space-y-3">

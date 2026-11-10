@@ -9,21 +9,34 @@ export async function proxy(request: NextRequest) {
 
   const area = Object.keys(AREA_ACCESS).find((p) => pathname === p || pathname.startsWith(p + "/"));
 
+  const createRedirect = (target: URL | string) => {
+    const redirectRes = NextResponse.redirect(typeof target === "string" ? new URL(target, request.url) : target);
+    response.cookies.getAll().forEach((c) => {
+      redirectRes.cookies.set(c.name, c.value, c);
+    });
+    return redirectRes;
+  };
+
   if (area) {
     if (!user || !role) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       url.searchParams.set("next", pathname);
-      return NextResponse.redirect(url);
+      return createRedirect(url);
     }
     if (!AREA_ACCESS[area].includes(role)) {
-      return NextResponse.redirect(new URL(DASHBOARD_BY_ROLE[role], request.url));
+      return createRedirect(new URL(DASHBOARD_BY_ROLE[role], request.url));
     }
   }
 
-  // Signed-in users don't need the auth pages
-  if (user && role && (pathname === "/login" || pathname === "/register")) {
-    return NextResponse.redirect(new URL(DASHBOARD_BY_ROLE[role], request.url));
+  // Signed-in users on auth pages or landing → go to their dashboard (Bug 4)
+  const authOrLanding =
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname.startsWith("/register/") ||
+    pathname === "/";
+  if (user && role && authOrLanding) {
+    return createRedirect(new URL(DASHBOARD_BY_ROLE[role], request.url));
   }
   return response;
 }

@@ -38,8 +38,34 @@ export async function updateProfileAction(
 
     revalidatePath("/profile");
     revalidatePath("/student");
+    revalidatePath("/settings");
     return { success: true };
   } catch (err: any) {
     return { error: err.message || "Failed to update profile." };
+  }
+}
+
+export async function changePasswordAction(
+  _prev: { error?: string; success?: boolean } | undefined,
+  formData: FormData
+) {
+  try {
+    const password = String(formData.get("password") || "");
+    const confirm = String(formData.get("confirm_password") || "");
+
+    if (password.length < 8) {
+      return { error: "New password must be at least 8 characters long." };
+    }
+    if (password !== confirm) {
+      return { error: "Passwords do not match." };
+    }
+
+    const supabase = await createClient();
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) return { error: error.message };
+
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message || "Failed to update password." };
   }
 }

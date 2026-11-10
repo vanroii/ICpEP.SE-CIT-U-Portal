@@ -1,298 +1,333 @@
-"use client";
-
-import React, { useState, Suspense } from "react";
+import React from "react";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 import { PortalShell } from "@/components/PortalShell";
-import { useSearchParams } from "next/navigation";
+import { CreateEventModal } from "./CreateEventModal";
+import { CreatePostModal } from "./CreatePostModal";
+import { ReviewApplicationModal } from "./ReviewApplicationModal";
+import { Badge } from "@/components/ui/Badge";
 import {
+  Users,
+  Calendar,
+  Award,
+  CheckCircle2,
+  Clock,
   FileText,
-  ChevronDown,
-  ArrowUpRight,
   TrendingUp,
-  Download,
+  Shield,
+  Activity,
+  Plus,
 } from "lucide-react";
+import { ROLE_LABELS, type RoleCode } from "@/lib/roles";
 
-export default function OfficerPortalPage() {
+export const dynamic = "force-dynamic";
+
+export default async function OfficerPortalPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ tab?: string }>;
+}) {
+  const resolvedParams = searchParams ? await searchParams : {};
+  const currentTab = resolvedParams?.tab || "dashboard";
+
+  let user: any = null;
+  let role: RoleCode = "officer";
+  let profile: any = null;
+  let membersCount = 0;
+  let eventsCount = 0;
+  let pendingAppsCount = 0;
+  let pendingApplications: any[] = [];
+  let recentEvents: any[] = [];
+  let activityLogs: any[] = [];
+  let participationReports: any[] = [];
+
+  try {
+    const supabase = await createClient();
+    const { data: authData } = await supabase.auth.getUser();
+    user = authData?.user ?? null;
+
+    if (!user) {
+      redirect("/login?next=/officer");
+    }
+
+    const { data: roleCode } = await supabase.rpc("auth_role");
+    role = (roleCode as RoleCode) ?? "officer";
+
+    if (role !== "officer" && role !== "admin") {
+      redirect("/student");
+    }
+
+    const [
+      { data: prof },
+      { count: mCount },
+      { count: eCount },
+      { count: aCount },
+      { data: pendingApps },
+      { data: eventsData },
+      { data: logs },
+      { data: reports },
+    ] = await Promise.all([
+      supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+      supabase.from("memberships").select("*", { count: "exact", head: true }).eq("status", "active"),
+      supabase.from("events").select("*", { count: "exact", head: true }).eq("status", "published"),
+      supabase.from("membership_applications").select("*", { count: "exact", head: true }).eq("status", "pending"),
+      supabase
+        .from("membership_applications")
+        .select("id,claimed_membership_no,submitted_at,status,applicant:profiles!membership_applications_applicant_id_fkey(id,first_name,last_name,student_number,email,program,year_level)")
+        .eq("status", "pending")
+        .order("submitted_at", { ascending: false }),
+      supabase
+        .from("events")
+        .select("*")
+        .order("start_at", { ascending: false })
+        .limit(6),
+      supabase
+        .from("report_activity_log")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(10),
+      supabase
+        .from("report_event_participation")
+        .select("*")
+        .limit(10),
+    ]);
+
+    profile = prof;
+    membersCount = mCount ?? 0;
+    eventsCount = eCount ?? 0;
+    pendingAppsCount = aCount ?? 0;
+    pendingApplications = pendingApps ?? [];
+    recentEvents = eventsData ?? [];
+    activityLogs = logs ?? [];
+    participationReports = reports ?? [];
+  } catch (err: any) {
+    if (err?.message === "NEXT_REDIRECT") throw err;
+    console.error("Officer dashboard data fetch error:", err);
+  }
+
+  const fullName = profile ? `${profile.first_name} ${profile.last_name}` : "Chapter Officer";
+  const roleLabel = ROLE_LABELS[role] || "Officer";
+
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-[#F8F8F7] flex items-center justify-center text-[#514B47] text-sm font-medium">
-          Loading Officer Portal...
-        </div>
-      }
+    <PortalShell
+      activeItem="Home"
+      role={role}
+      userName={fullName}
+      userRoleLabel={roleLabel}
     >
-      <OfficerContent />
-    </Suspense>
-  );
-}
-
-function OfficerContent() {
-  const searchParams = useSearchParams();
-  const tab = searchParams.get("tab") || "analytics";
-
-  const statCards = [
-    { value: "0", label: "ICpEP members" },
-    { value: "0", label: "Events held" },
-    { value: "0%", label: "Avg. participation" },
-    { value: "0", label: "Pending applications" },
-  ];
-
-  const barChartData: Array<{ name: string; count: number; height: number }> = [];
-
-  const participationRows: Array<{
-    event: string;
-    date: string;
-    reg: string;
-    att: string;
-    rate: string;
-  }> = [];
-
-  const activityLogs: Array<{
-    time: string;
-    user: string;
-    role: string;
-    action: string;
-  }> = [];
-
-  return (
-    <PortalShell activeItem="Analytics and Reports" role="officer">
-      <div className="space-y-7">
-        {/* Page Header (1096x62, §8.2) */}
+      <div className="space-y-8 max-w-[1096px]">
+        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1.5">
             <h1 className="text-[30px] leading-[38px] font-bold text-[#1C1713] tracking-[-0.5px]">
-              Analytics and Reports
+              Officer Control Panel
             </h1>
             <p className="text-[15px] text-[#817B77]">
-              Overview of membership, events, and activity.
+              Manage chapter operations, verify membership applications, and track participation.
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Month selector */}
-            <div className="h-[34px] px-3 rounded-[10px] bg-white border border-[#C9C5C2] flex items-center gap-2 text-[13px] font-medium text-[#3D3733] cursor-pointer">
-              <span>October 2026</span>
-              <ChevronDown className="w-3.5 h-3.5 text-[#928C88]" />
-            </div>
-
-            {/* Export PDF Button */}
-            <button
-              onClick={() => alert("Report exported")}
-              className="h-[43px] px-[22px] rounded-[8px] border-[1.5px] border-[#0087B5] text-[#0087B5] hover:bg-[#E3F6FC] text-[14px] font-semibold transition-colors flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              <span>Export PDF</span>
-            </button>
+            <CreateEventModal />
+            <CreatePostModal />
           </div>
         </div>
 
-        {/* 4 Stat Cards Row (1096x109) */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {statCards.map((stat) => (
-            <div
-              key={stat.label}
-              className="bg-white border border-[#DEDBD8] rounded-[14px] p-[22px_24px] space-y-1.5"
-            >
-              <p className="text-[34px] leading-[40px] font-bold tracking-[-0.5px] text-[#0087B5]">
-                {stat.value}
-              </p>
-              <p className="text-[14px] font-medium text-[#817B77]">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Charts Row: Bar Chart (692px) + Breakdown (380px) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Bar Chart */}
-          <div className="lg:col-span-8 bg-white border border-[#DEDBD8] rounded-[16px] p-[22px_24px] space-y-5">
-            <div className="flex items-center justify-between">
-              <h3 className="text-[18px] font-semibold text-[#1C1713]">
-                Event participation (attended)
-              </h3>
-              <span className="text-[14px] font-semibold text-[#0087B5]">
-                Last 6 events
+        {/* 4 Core Stat Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-5 space-y-1.5 shadow-xs">
+            <div className="flex items-center justify-between text-[#0087B5]">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#817B77]">
+                Active Members
               </span>
+              <Award className="w-4 h-4" />
             </div>
-
-            {/* Bars */}
-            <div className="h-[210px] border-b border-[#DEDBD8] flex items-end justify-between px-4 pb-2">
-              {barChartData.length > 0 ? (
-                barChartData.map((bar) => (
-                  <div
-                    key={bar.name}
-                    className="flex flex-col items-center gap-2 group w-[52px]"
-                  >
-                    <span className="text-[12px] font-semibold text-[#817B77]">
-                      {bar.count}
-                    </span>
-                    <div
-                      style={{ height: `${bar.height}px` }}
-                      className="w-[52px] bg-[#19A7D5] rounded-t-[8px] group-hover:bg-[#1695bf] transition-all"
-                    />
-                    <span className="text-[11px] font-medium text-[#817B77] truncate w-full text-center">
-                      {bar.name}
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-[14px] text-[#817B77]">
-                  No event participation data recorded yet.
-                </div>
-              )}
-            </div>
+            <p className="text-2xl font-bold text-[#1C1713]">{membersCount}</p>
+            <p className="text-[12px] text-[#817B77]">AY 2026–2027 Verified</p>
           </div>
 
-          {/* Membership Breakdown */}
-          <div className="lg:col-span-4 bg-white border border-[#DEDBD8] rounded-[16px] p-[22px_24px] space-y-5">
-            <h3 className="text-[18px] font-semibold text-[#1C1713]">
-              Membership breakdown
-            </h3>
-
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex justify-between text-[14px]">
-                  <span className="font-medium text-[#3D3733]">ICpEP members</span>
-                  <span className="font-semibold text-[#1C1713]">0</span>
-                </div>
-                <div className="w-full h-2.5 rounded-full bg-[#DEDBD8] overflow-hidden">
-                  <div className="h-full bg-[#19A7D5] rounded-full" style={{ width: "0%" }} />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between text-[14px]">
-                  <span className="font-medium text-[#3D3733]">Non-members</span>
-                  <span className="font-semibold text-[#1C1713]">0</span>
-                </div>
-                <div className="w-full h-2.5 rounded-full bg-[#DEDBD8] overflow-hidden">
-                  <div className="h-full bg-[#19A7D5] rounded-full" style={{ width: "0%" }} />
-                </div>
-              </div>
+          <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-5 space-y-1.5 shadow-xs">
+            <div className="flex items-center justify-between text-[#B45309]">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#817B77]">
+                Pending Verifications
+              </span>
+              <Clock className="w-4 h-4" />
             </div>
+            <p className="text-2xl font-bold text-[#1C1713]">{pendingAppsCount}</p>
+            <p className="text-[12px] text-[#817B77]">Requires officer review</p>
+          </div>
 
-            <p className="text-[13px] text-[#817B77] pt-2">
-              0 registered CpE students in total
-            </p>
+          <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-5 space-y-1.5 shadow-xs">
+            <div className="flex items-center justify-between text-[#0087B5]">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#817B77]">
+                Published Events
+              </span>
+              <Calendar className="w-4 h-4" />
+            </div>
+            <p className="text-2xl font-bold text-[#1C1713]">{eventsCount}</p>
+            <p className="text-[12px] text-[#817B77]">Assemblies & workshops</p>
+          </div>
+
+          <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-5 space-y-1.5 shadow-xs">
+            <div className="flex items-center justify-between text-[#15803D]">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#817B77]">
+                System Status
+              </span>
+              <Shield className="w-4 h-4" />
+            </div>
+            <p className="text-2xl font-bold text-[#1C1713]">Online</p>
+            <p className="text-[12px] text-[#817B77]">RLS Security Guarded</p>
           </div>
         </div>
 
-        {/* Content Row: Participation Table (692px) + Year Level Breakdown (380px) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Table */}
-          <div className="lg:col-span-8 bg-white border border-[#DEDBD8] rounded-[16px] p-[22px_24px] space-y-4">
-            <h3 className="text-[18px] font-semibold text-[#1C1713]">
-              Event participation
-            </h3>
+        {/* Pending Verifications Queue */}
+        <div className="bg-white border border-[#DEDBD8] rounded-[16px] overflow-hidden shadow-xs space-y-4 p-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <h2 className="text-[18px] font-bold text-[#1C1713] flex items-center gap-2">
+                <Clock className="w-4 h-4 text-[#B45309]" />
+                Membership Verification Queue ({pendingApplications.length})
+              </h2>
+              <p className="text-xs text-[#817B77]">
+                Review student credentials, assign official membership numbers, and grant certified status.
+              </p>
+            </div>
+          </div>
 
-            <div className="border border-[#DEDBD8] rounded-[10px] overflow-x-auto">
-              <table className="w-full text-left text-[14px]">
-                <thead className="bg-[#FAF9F8] text-[11px] font-bold text-[#817B77] tracking-[0.6px] uppercase border-b border-[#DEDBD8]">
-                  <tr>
-                    <th className="py-2.5 px-4">EVENT</th>
-                    <th className="py-2.5 px-3">DATE</th>
-                    <th className="py-2.5 px-3">REGISTERED</th>
-                    <th className="py-2.5 px-3">ATTENDED</th>
-                    <th className="py-2.5 px-3">RATE</th>
+          {pendingApplications.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-[#EEECEA] text-[#817B77] bg-[#FAF9F8]">
+                    <th className="py-3 px-4 font-bold">APPLICANT</th>
+                    <th className="py-3 px-4 font-bold">STUDENT ID</th>
+                    <th className="py-3 px-4 font-bold">PROGRAM & YEAR</th>
+                    <th className="py-3 px-4 font-bold">CLAIMED REFERENCE</th>
+                    <th className="py-3 px-4 font-bold">SUBMITTED</th>
+                    <th className="py-3 px-4 font-bold text-right">ACTION</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#EEECEA]">
-                  {participationRows.length > 0 ? (
-                    participationRows.map((r, i) => (
-                      <tr key={i} className="hover:bg-[#FAF9F8]">
-                        <td className="py-3 px-4 font-semibold text-[#1C1713]">
-                          {r.event}
+                  {pendingApplications.map((app) => {
+                    const applicant = app.applicant;
+                    if (!applicant) return null;
+                    return (
+                      <tr key={app.id} className="hover:bg-[#FAF9F8] transition-colors">
+                        <td className="py-3 px-4">
+                          <p className="font-bold text-[#1C1713]">
+                            {applicant.first_name} {applicant.last_name}
+                          </p>
+                          <p className="text-[11px] text-[#817B77]">{applicant.email}</p>
                         </td>
-                        <td className="py-3 px-3 text-[#514B47]">{r.date}</td>
-                        <td className="py-3 px-3 text-[#514B47]">{r.reg}</td>
-                        <td className="py-3 px-3 text-[#514B47]">{r.att}</td>
-                        <td className="py-3 px-3 text-[#514B47] font-medium">
-                          {r.rate}
+                        <td className="py-3 px-4 font-mono font-medium text-[#1C1713]">
+                          {applicant.student_number || "—"}
+                        </td>
+                        <td className="py-3 px-4 text-[#514B47]">
+                          {applicant.program} · Yr {applicant.year_level || 1}
+                        </td>
+                        <td className="py-3 px-4 font-mono text-[#0087B5]">
+                          {app.claimed_membership_no || "New Member"}
+                        </td>
+                        <td className="py-3 px-4 text-[#817B77]">
+                          {new Date(app.submitted_at).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <ReviewApplicationModal application={app} />
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={5} className="py-8 text-center text-[#817B77]">
-                        No event participation data recorded yet.
-                      </td>
-                    </tr>
-                  )}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
-          </div>
-
-          {/* Members by Year Level */}
-          <div className="lg:col-span-4 bg-white border border-[#DEDBD8] rounded-[16px] p-[22px_24px] space-y-4">
-            <h3 className="text-[18px] font-semibold text-[#1C1713]">
-              Members by year level
-            </h3>
-
-            <div className="space-y-4">
-              {[
-                { year: "1st year", count: "0", pct: "0%" },
-                { year: "2nd year", count: "0", pct: "0%" },
-                { year: "3rd year", count: "0", pct: "0%" },
-                { year: "4th year", count: "0", pct: "0%" },
-              ].map((y) => (
-                <div key={y.year} className="space-y-2">
-                  <div className="flex justify-between text-[14px]">
-                    <span className="font-medium text-[#3D3733]">{y.year}</span>
-                    <span className="font-semibold text-[#1C1713]">{y.count}</span>
-                  </div>
-                  <div className="w-full h-2.5 rounded-full bg-[#DEDBD8] overflow-hidden">
-                    <div
-                      className="h-full bg-[#19A7D5] rounded-full"
-                      style={{ width: y.pct }}
-                    />
-                  </div>
-                </div>
-              ))}
+          ) : (
+            <div className="py-8 text-center text-xs text-[#817B77] space-y-1">
+              <CheckCircle2 className="w-6 h-6 text-[#15803D] mx-auto opacity-80" />
+              <p className="font-bold text-[#1C1713]">All caught up!</p>
+              <p>There are no pending membership applications waiting for review.</p>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Activity Log (1096x401) */}
-        <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-[22px_24px] space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-[18px] font-semibold text-[#1C1713]">
-              Activity log
-            </h3>
-            <span className="text-[14px] font-semibold text-[#0087B5]">
-              Last 7 days
-            </span>
+        {/* 2 Columns: Recent Events & Activity Log */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Left Column: Chapter Events Summary */}
+          <div className="lg:col-span-7 bg-white border border-[#DEDBD8] rounded-[16px] p-6 space-y-4 shadow-xs">
+            <div className="flex items-center justify-between pb-2 border-b border-[#EEECEA]">
+              <h3 className="text-[16px] font-bold text-[#1C1713] flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-[#0087B5]" />
+                Chapter Events & Participation
+              </h3>
+              <Link href="/events" className="text-xs font-semibold text-[#0087B5] hover:underline">
+                View all →
+              </Link>
+            </div>
+
+            {recentEvents.length > 0 ? (
+              <div className="divide-y divide-[#EEECEA]">
+                {recentEvents.map((evt) => (
+                  <div key={evt.id} className="py-3 flex items-center justify-between gap-4">
+                    <div className="min-w-0">
+                      <h4 className="font-bold text-[14px] text-[#1C1713] truncate">
+                        <Link href={`/events/${evt.slug}`} className="hover:text-[#0087B5]">
+                          {evt.title}
+                        </Link>
+                      </h4>
+                      <p className="text-xs text-[#817B77]">
+                        {new Date(evt.start_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })} · {evt.venue || "CIT-U"}
+                      </p>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <span className="text-xs font-bold text-[#0087B5]">
+                        {evt.participant_count || 0} registered
+                      </span>
+                      <p className="text-[11px] text-[#817B77]">
+                        {evt.capacity ? `Limit ${evt.capacity}` : "Unlimited"}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-8 text-center text-xs text-[#817B77]">
+                No chapter events created yet.
+              </div>
+            )}
           </div>
 
-          <div className="border border-[#DEDBD8] rounded-[10px] overflow-x-auto">
-            <table className="w-full text-left text-[14px]">
-              <thead className="bg-[#FAF9F8] text-[11px] font-bold text-[#817B77] tracking-[0.6px] uppercase border-b border-[#DEDBD8]">
-                <tr>
-                  <th className="py-2.5 px-4">TIME</th>
-                  <th className="py-2.5 px-4">USER</th>
-                  <th className="py-2.5 px-4">ROLE</th>
-                  <th className="py-2.5 px-4">ACTION</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#EEECEA]">
-                {activityLogs.length > 0 ? (
-                  activityLogs.map((log, i) => (
-                    <tr key={i} className="hover:bg-[#FAF9F8]">
-                      <td className="py-3.5 px-4 font-semibold text-[#1C1713] whitespace-nowrap">
-                        {log.time}
-                      </td>
-                      <td className="py-3.5 px-4 text-[#514B47]">{log.user}</td>
-                      <td className="py-3.5 px-4 text-[#514B47]">{log.role}</td>
-                      <td className="py-3.5 px-4 text-[#514B47]">{log.action}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={4} className="py-8 text-center text-[#817B77]">
-                      No activity logs recorded.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+          {/* Right Column: Activity Logs */}
+          <div className="lg:col-span-5 bg-white border border-[#DEDBD8] rounded-[16px] p-6 space-y-4 shadow-xs">
+            <div className="flex items-center justify-between pb-2 border-b border-[#EEECEA]">
+              <h3 className="text-[16px] font-bold text-[#1C1713] flex items-center gap-2">
+                <Activity className="w-4 h-4 text-[#0087B5]" />
+                Recent System Activity
+              </h3>
+            </div>
+
+            {activityLogs.length > 0 ? (
+              <div className="space-y-3">
+                {activityLogs.map((log) => (
+                  <div key={log.id} className="text-xs space-y-0.5">
+                    <div className="flex items-center justify-between text-[#817B77]">
+                      <span className="font-semibold text-[#1C1713]">{log.actor || "Officer"}</span>
+                      <span>
+                        {new Date(log.created_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                      </span>
+                    </div>
+                    <p className="text-[#514B47] font-mono text-[11px]">{log.action}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-8 text-center text-xs text-[#817B77]">
+                No recent activity logged.
+              </div>
+            )}
           </div>
         </div>
       </div>

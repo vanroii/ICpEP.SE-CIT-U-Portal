@@ -1,378 +1,304 @@
-"use client";
-
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 import { PortalShell } from "@/components/PortalShell";
-import { Search, MapPin, Clock, Plus, ChevronLeft, ChevronRight } from "lucide-react";
-import { Badge } from "@/components/ui/Badge";
+import { PublicNavbar } from "@/components/PublicNavbar";
+import { PublicFooter } from "@/components/PublicFooter";
+import { CreateEventModal } from "@/app/officer/CreateEventModal";
+import { Search, MapPin, Clock, Calendar, Users, ArrowRight } from "lucide-react";
+import { ROLE_LABELS, type RoleCode } from "@/lib/roles";
 
-export default function EventsPortalPage() {
-  const [filter, setFilter] = useState<"upcoming" | "going" | "past">("upcoming");
-  const [search, setSearch] = useState("");
-  const [showCreateModal, setShowCreateModal] = useState(false);
+export const dynamic = "force-dynamic";
 
-  const [eventsList, setEventsList] = useState<
-    Array<{
-      id: number;
-      month: string;
-      day: string;
-      title: string;
-      category: string;
-      venue: string;
-      time: string;
-      status: "going" | "pending" | "rsvp";
-    }>
-  >([]);
+export default async function EventsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ filter?: string; q?: string }>;
+}) {
+  const resolvedParams = searchParams ? await searchParams : {};
+  const filter = resolvedParams?.filter || "all";
+  const search = (resolvedParams?.q || "").toLowerCase();
 
-  const toggleRsvp = (id: number) => {
-    setEventsList((prev) =>
-      prev.map((e) => {
-        if (e.id === id) {
-          if (e.status === "going") return { ...e, status: "rsvp" };
-          if (e.status === "pending") return { ...e, status: "going" };
-          return { ...e, status: "pending" };
-        }
-        return e;
-      })
-    );
-  };
+  let user: any = null;
+  let role: RoleCode | null = null;
+  let profile: any = null;
+  let events: any[] = [];
+  let registeredEventIds: Set<number> = new Set();
 
-  const filteredEvents = eventsList.filter((e) => {
-    if (filter === "going" && e.status !== "going") return false;
-    if (filter === "past") return false; // none in past for current demo
-    if (search && !e.title.toLowerCase().includes(search.toLowerCase())) return false;
+  try {
+    const supabase = await createClient();
+    const { data: authData } = await supabase.auth.getUser();
+    user = authData?.user ?? null;
+
+    if (user) {
+      const [{ data: r }, { data: p }, { data: regs }] = await Promise.all([
+        supabase.rpc("auth_role"),
+        supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+        supabase.from("event_registrations").select("event_id").eq("user_id", user.id).eq("status", "registered"),
+      ]);
+      role = (r as RoleCode) ?? null;
+      profile = p;
+      if (regs) {
+        registeredEventIds = new Set(regs.map((r: any) => Number(r.event_id)));
+      }
+    }
+
+    const { data: eventsData } = await supabase
+      .from("events")
+      .select("*")
+      .eq("status", "published")
+      .order("start_at", { ascending: true });
+
+    events = eventsData ?? [];
+  } catch (err) {
+    console.error("Events fetch error:", err);
+  }
+
+  // Fallback demo events if database is unseeded
+  const fallbackEvents = [
+    {
+      id: 1,
+      title: "CpE General Assembly 2026: Innovate, Integrate, Inspire",
+      slug: "cpe-general-assembly-2026",
+      start_at: "2026-11-20T13:00:00+08:00",
+      venue: "CIT-U Auditorium & Virtual Stream",
+      visibility: "public",
+      status: "published",
+      participant_count: 142,
+      capacity: 250,
+      description: "The premier gathering of all Computer Engineering students at CIT-U. Meet your officers and learn the roadmap.",
+    },
+    {
+      id: 2,
+      title: "Embedded Systems & IoT Hands-On Workshop",
+      slug: "embedded-systems-iot-workshop-2026",
+      start_at: "2026-11-28T09:00:00+08:00",
+      venue: "CEA Building Lab 304",
+      visibility: "members_only",
+      status: "published",
+      participant_count: 36,
+      capacity: 40,
+      description: "Hands-on microcontroller programming with ESP32 and FreeRTOS. Open exclusively to verified ICpEP Members.",
+    },
+    {
+      id: 3,
+      title: "Wildcat Hackathon 2026: Solutions for Tomorrow",
+      slug: "wildcat-hackathon-2026",
+      start_at: "2026-12-05T08:00:00+08:00",
+      venue: "CIT-U Innovation Hub",
+      visibility: "public",
+      status: "published",
+      participant_count: 88,
+      capacity: 120,
+      description: "Annual 24-hour hackathon challenging CpE student teams to build hardware-software integrated prototypes.",
+    },
+  ];
+
+  const sourceEvents = events.length > 0 ? events : fallbackEvents;
+
+  const filteredEvents = sourceEvents.filter((e) => {
+    if (filter === "going" && !registeredEventIds.has(e.id)) return false;
+    if (filter === "members_only" && e.visibility !== "members_only") return false;
+    if (filter === "public" && e.visibility !== "public") return false;
+
+    if (search) {
+      const matchTitle = e.title?.toLowerCase().includes(search);
+      const matchVenue = e.venue?.toLowerCase().includes(search);
+      if (!matchTitle && !matchVenue) return false;
+    }
     return true;
   });
 
-  return (
-    <PortalShell activeItem="Events">
-      <div className="space-y-7">
-        {/* Page Header (1096x62, §6.2) */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <h1 className="text-[30px] leading-[38px] font-bold text-[#1C1713] tracking-[-0.5px]">
-              Events
-            </h1>
-            <p className="text-[15px] text-[#817B77]">
-              Browse upcoming ICpEP.SE events and RSVP in one tap.
-            </p>
-          </div>
+  const isStaff = role === "officer" || role === "admin";
+  const fullName = profile ? `${profile.first_name} ${profile.last_name}` : "User";
+  const roleLabel = role ? ROLE_LABELS[role] : "Student";
 
-          <div className="flex items-center gap-3">
-            {/* Search Input (260x42) */}
-            <div className="w-[260px] h-[42px] px-3 bg-white border border-[#C9C5C2] rounded-[10px] flex items-center gap-2">
-              <Search className="w-4 h-4 text-[#928C88] shrink-0" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search events"
-                className="w-full text-[14px] text-[#1C1713] placeholder-[#928C88] bg-transparent outline-none"
-              />
-            </div>
-
-            {/* Create event button (for Officers / Faculty, §8) */}
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="h-[43px] px-[18px] rounded-[8px] bg-[#19A7D5] hover:bg-[#1695bf] text-[#12191C] font-semibold text-[14px] flex items-center gap-1.5"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Create event</span>
-            </button>
-          </div>
+  const content = (
+    <div className="space-y-7 max-w-[1096px]">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1.5">
+          <h1 className="text-[30px] leading-[38px] font-bold text-[#1C1713] tracking-[-0.5px]">
+            Events Calendar
+          </h1>
+          <p className="text-[15px] text-[#817B77]">
+            Browse upcoming ICpEP.SE chapter events, bootcamps, and assemblies.
+          </p>
         </div>
 
-        {/* Filters (285x32 H10, §6.2) */}
-        <div className="flex items-center gap-2.5">
-          <button
-            onClick={() => setFilter("upcoming")}
-            className={`h-[32px] px-[14px] rounded-full text-[13px] font-semibold transition-colors ${
-              filter === "upcoming"
-                ? "bg-[#19A7D5] text-[#12191C]"
-                : "bg-white border border-[#DEDBD8] text-[#817B77] hover:text-[#1C1713]"
-            }`}
-          >
-            Upcoming
-          </button>
-          <button
-            onClick={() => setFilter("going")}
-            className={`h-[32px] px-[14px] rounded-full text-[13px] font-semibold transition-colors ${
+        <div className="flex items-center gap-3">
+          {/* Search Form */}
+          <form method="get" className="relative w-[260px]">
+            <input type="hidden" name="filter" value={filter} />
+            <Search className="w-4 h-4 text-[#928C88] absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              name="q"
+              defaultValue={search}
+              placeholder="Search events..."
+              className="w-full h-[42px] pl-9 pr-3 bg-white border border-[#C9C5C2] rounded-[10px] text-[14px] text-[#1C1713] placeholder-[#928C88] outline-none focus:border-[#19A7D5]"
+            />
+          </form>
+
+          {isStaff && <CreateEventModal />}
+        </div>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="flex items-center gap-2.5 flex-wrap">
+        <Link
+          href={`/events${search ? `?q=${encodeURIComponent(search)}` : ""}`}
+          className={`h-[32px] px-[14px] rounded-full text-[13px] font-semibold transition-colors flex items-center ${
+            filter === "all"
+              ? "bg-[#19A7D5] text-[#12191C]"
+              : "bg-white border border-[#DEDBD8] text-[#817B77] hover:text-[#1C1713]"
+          }`}
+        >
+          All Upcoming ({sourceEvents.length})
+        </Link>
+        {user && (
+          <Link
+            href={`/events?filter=going${search ? `&q=${encodeURIComponent(search)}` : ""}`}
+            className={`h-[32px] px-[14px] rounded-full text-[13px] font-semibold transition-colors flex items-center ${
               filter === "going"
                 ? "bg-[#19A7D5] text-[#12191C]"
                 : "bg-white border border-[#DEDBD8] text-[#817B77] hover:text-[#1C1713]"
             }`}
           >
-            Going
-          </button>
-          <button
-            onClick={() => setFilter("past")}
-            className={`h-[32px] px-[14px] rounded-full text-[13px] font-semibold transition-colors ${
-              filter === "past"
-                ? "bg-[#19A7D5] text-[#12191C]"
-                : "bg-white border border-[#DEDBD8] text-[#817B77] hover:text-[#1C1713]"
-            }`}
-          >
-            Past events
-          </button>
-        </div>
+            My RSVPs ({registeredEventIds.size})
+          </Link>
+        )}
+        <Link
+          href={`/events?filter=members_only${search ? `&q=${encodeURIComponent(search)}` : ""}`}
+          className={`h-[32px] px-[14px] rounded-full text-[13px] font-semibold transition-colors flex items-center ${
+            filter === "members_only"
+              ? "bg-[#19A7D5] text-[#12191C]"
+              : "bg-white border border-[#DEDBD8] text-[#817B77] hover:text-[#1C1713]"
+          }`}
+        >
+          Members Only ★
+        </Link>
+      </div>
 
-        {/* Content Row (1096x731 H24) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left: Card: Upcoming events (732px wide = lg:col-span-8) */}
-          <div className="lg:col-span-8 bg-white border border-[#DEDBD8] rounded-[16px] p-[22px_24px] space-y-4">
-            <div className="flex items-center justify-between pb-1">
-              <h3 className="text-[18px] font-semibold text-[#1C1713]">
-                Upcoming events
-              </h3>
-              <span className="text-[14px] font-semibold text-[#0087B5]">
-                {filteredEvents.length} events
-              </span>
-            </div>
+      {/* Events Grid */}
+      {filteredEvents.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredEvents.map((evt) => {
+            const startDate = new Date(evt.start_at);
+            const isGoing = registeredEventIds.has(evt.id);
+            const isMembersOnly = evt.visibility === "members_only";
 
-            {filteredEvents.length > 0 ? (
-              <div className="divide-y divide-[#EEECEA]">
-                {filteredEvents.map((evt) => (
-                  <div
-                    key={evt.id}
-                    className="py-4 first:pt-2 flex items-center justify-between gap-4"
-                  >
-                    <div className="flex items-center gap-4 min-w-0">
-                      {/* Date Box 60x60 */}
-                      <div className="w-[60px] h-[60px] rounded-[12px] bg-[#E3F6FC] flex flex-col items-center justify-center shrink-0">
-                        <span className="text-[11px] font-bold tracking-[0.5px] text-[#0087B5] leading-none">
-                          {evt.month}
-                        </span>
-                        <span className="text-[22px] font-bold text-[#0087B5] leading-tight">
-                          {evt.day}
-                        </span>
-                      </div>
-
-                      {/* Details */}
-                      <div className="space-y-1.5 min-w-0">
-                        <div className="flex items-center gap-2.5 flex-wrap">
-                          <h4 className="text-[16px] font-semibold text-[#1C1713] truncate">
-                            {evt.title}
-                          </h4>
-                          <span className="px-2.5 py-0.5 rounded-full bg-[#E3F6FC] text-[#0087B5] text-[12px] font-semibold">
-                            {evt.category}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-[13px] text-[#817B77]">
-                          <MapPin className="w-3.5 h-3.5 shrink-0" />
-                          <span className="truncate">{evt.venue}</span>
-                          <span>·</span>
-                          <Clock className="w-3.5 h-3.5 shrink-0" />
-                          <span>{evt.time}</span>
-                        </div>
-                      </div>
+            return (
+              <div
+                key={evt.slug || evt.id}
+                className="bg-white border border-[#DEDBD8] rounded-[16px] overflow-hidden flex flex-col justify-between hover:border-[#19A7D5] transition-colors shadow-xs"
+              >
+                <div>
+                  {/* Photo / Header Placeholder */}
+                  <div className="h-[140px] w-full event-photo-gradient flex items-center justify-between p-4 text-white">
+                    <div className="bg-white/20 backdrop-blur-xs rounded-[10px] p-2 text-center min-w-[50px]">
+                      <span className="block text-[11px] font-bold uppercase tracking-wider">
+                        {startDate.toLocaleDateString("en-US", { month: "short" })}
+                      </span>
+                      <span className="block text-[20px] font-extrabold leading-tight">
+                        {startDate.getDate()}
+                      </span>
                     </div>
 
-                    {/* RSVP button */}
-                    <div>
-                      {evt.status === "going" && (
-                        <button
-                          onClick={() => toggleRsvp(evt.id)}
-                          className="h-[32px] px-3.5 rounded-[8px] bg-[#19A7D5] hover:bg-[#1695bf] text-[#12191C] text-[13px] font-semibold shrink-0"
-                        >
-                          Going
-                        </button>
+                    <div className="flex flex-col items-end gap-1">
+                      {isGoing && (
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#DCFCE7] text-[#15803D]">
+                          Registered ✓
+                        </span>
                       )}
-                      {evt.status === "pending" && (
-                        <button
-                          onClick={() => toggleRsvp(evt.id)}
-                          className="h-[34px] px-3.5 rounded-[8px] border border-[#C9C5C2] text-[#0087B5] hover:bg-[#FAF9F8] text-[13px] font-semibold shrink-0"
-                        >
-                          Pending
-                        </button>
-                      )}
-                      {evt.status === "rsvp" && (
-                        <button
-                          onClick={() => toggleRsvp(evt.id)}
-                          className="h-[34px] px-3.5 rounded-[8px] border border-[#C9C5C2] text-[#0087B5] hover:bg-[#FAF9F8] text-[13px] font-semibold shrink-0"
-                        >
-                          RSVP
-                        </button>
+                      {isMembersOnly && (
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#FEF3C7] text-[#B45309]">
+                          Members Only
+                        </span>
                       )}
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="py-16 text-center space-y-2">
-                <p className="text-[16px] font-semibold text-[#1C1713]">
-                  No events found
-                </p>
-                <p className="text-[14px] text-[#817B77] max-w-sm mx-auto">
-                  There are currently no events matching this filter. New activities will be posted here once announced.
-                </p>
-              </div>
-            )}
-          </div>
 
-          {/* Right Rail (340px wide = lg:col-span-4) */}
-          <div className="lg:col-span-4 space-y-6">
-            {/* Calendar Card */}
-            <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-[22px_24px] space-y-3.5">
-              <div className="flex items-center justify-between">
-                <h3 className="text-[18px] font-semibold text-[#1C1713]">
-                  Calendar
-                </h3>
-              </div>
+                  <div className="p-5 space-y-3">
+                    <h3 className="text-[17px] font-bold text-[#1C1713] leading-snug">
+                      <Link href={`/events/${evt.slug}`} className="hover:text-[#0087B5]">
+                        {evt.title}
+                      </Link>
+                    </h3>
 
-              {/* Day Headers */}
-              <div className="grid grid-cols-7 text-center text-[12px] font-bold text-[#928C88] py-1">
-                <span>S</span>
-                <span>M</span>
-                <span>T</span>
-                <span>W</span>
-                <span>T</span>
-                <span>F</span>
-                <span>S</span>
-              </div>
+                    {evt.description && (
+                      <p className="text-[13px] text-[#514B47] line-clamp-2 leading-relaxed">
+                        {evt.description}
+                      </p>
+                    )}
 
-              {/* Calendar Grid: 1..30 */}
-              <div className="grid grid-cols-7 gap-y-1 text-center text-[13px] font-medium text-[#3D3733]">
-                {[...Array(30)].map((_, i) => {
-                  const day = i + 1;
-                  return (
-                    <div key={day} className="h-8 flex items-center justify-center">
-                      <span className="w-[34px] h-[34px] rounded-full flex items-center justify-center hover:bg-[#FAF9F8]">
-                        {day}
-                      </span>
+                    <div className="space-y-1.5 text-[12px] text-[#817B77] pt-1">
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-[#0087B5]" />
+                        <span>
+                          {startDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-[#0087B5]" />
+                        <span className="truncate">{evt.venue || "CIT-U Campus"}</span>
+                      </div>
+                      {evt.capacity && (
+                        <div className="flex items-center gap-1.5">
+                          <Users className="w-3.5 h-3.5 text-[#0087B5]" />
+                          <span>
+                            {evt.participant_count || 0} / {evt.capacity} registered
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  );
-                })}
-              </div>
-            </div>
+                  </div>
+                </div>
 
-            {/* My Registrations Card */}
-            <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-[22px_24px] space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-[18px] font-semibold text-[#1C1713]">
-                  My registrations
-                </h3>
-                <span className="text-[14px] font-semibold text-[#0087B5]">
-                  0 events
-                </span>
+                <div className="p-5 pt-0">
+                  <Link
+                    href={`/events/${evt.slug}`}
+                    className="w-full h-[38px] rounded-[8px] bg-[#E3F6FC] hover:bg-[#19A7D5] text-[#0087B5] hover:text-[#12191C] font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    <span>{isGoing ? "Manage Registration" : "View & Register"}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
               </div>
-
-              <div className="py-6 text-center space-y-1.5">
-                <p className="text-[14px] font-medium text-[#514B47]">
-                  No active registrations
-                </p>
-                <p className="text-[12px] text-[#817B77]">
-                  Events you RSVP to will be listed here.
-                </p>
-              </div>
-
-              <p className="text-[13px] leading-[20px] text-[#817B77]">
-                You will get a confirmation notification after you register for an event.
-              </p>
-            </div>
-          </div>
+            );
+          })}
         </div>
-      </div>
-
-      {/* Create Event Modal (§8.1) */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-[#DEDBD8] rounded-[16px] max-w-2xl w-full p-6 sm:p-8 space-y-6 max-h-[90vh] overflow-y-auto">
-            <div>
-              <h2 className="text-[24px] font-bold text-[#1C1713]">Create event</h2>
-              <p className="text-[14px] text-[#817B77]">
-                Fill in the details below to publish a new event for ICpEP.SE members.
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[13px] font-semibold text-[#1C1713] mb-1.5">
-                  Event title
-                </label>
-                <input
-                  placeholder="Enter event title"
-                  className="w-full h-12 px-4 rounded-[10px] border border-[#C9C5C2] text-sm outline-none focus:border-[#19A7D5]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[13px] font-semibold text-[#1C1713] mb-1.5">
-                  Description
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="Add a short description, agenda, and any important details members should know before attending."
-                  className="w-full p-4 rounded-[10px] border border-[#C9C5C2] text-sm outline-none focus:border-[#19A7D5]"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[13px] font-semibold text-[#1C1713] mb-1.5">
-                    Category
-                  </label>
-                  <select className="w-full h-12 px-4 rounded-[10px] border border-[#C9C5C2] text-sm outline-none">
-                    <option>Workshop</option>
-                    <option>General Assembly</option>
-                    <option>Social</option>
-                    <option>Competition</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[13px] font-semibold text-[#1C1713] mb-1.5">
-                    Audience
-                  </label>
-                  <select className="w-full h-12 px-4 rounded-[10px] border border-[#C9C5C2] text-sm outline-none">
-                    <option>Open to all CpE students</option>
-                    <option>Verified members only</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[13px] font-semibold text-[#1C1713] mb-1.5">
-                    Start date & time
-                  </label>
-                  <input
-                    placeholder="MM/DD/YYYY · HH:MM AM/PM"
-                    className="w-full h-12 px-4 rounded-[10px] border border-[#C9C5C2] text-sm outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[13px] font-semibold text-[#1C1713] mb-1.5">
-                    Venue or online link
-                  </label>
-                  <input
-                    placeholder="Enter venue or online meeting link"
-                    className="w-full h-12 px-4 rounded-[10px] border border-[#C9C5C2] text-sm outline-none"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between pt-4 border-t border-[#EEECEA]">
-              <p className="text-xs text-[#817B77] max-w-xs">
-                Drafts are saved automatically. Publishing makes the event visible to the community.
-              </p>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 border border-[#C9C5C2] text-[#0087B5] rounded-[8px] text-sm font-semibold hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-5 py-2.5 bg-[#19A7D5] hover:bg-[#1695bf] text-[#12191C] rounded-[8px] text-sm font-semibold"
-                >
-                  Publish event
-                </button>
-              </div>
-            </div>
-          </div>
+      ) : (
+        <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-12 text-center space-y-3">
+          <Calendar className="w-8 h-8 text-[#817B77] mx-auto opacity-50" />
+          <h3 className="text-[17px] font-bold text-[#1C1713]">No events found</h3>
+          <p className="text-[14px] text-[#817B77] max-w-sm mx-auto">
+            Try adjusting your search query or switching filters.
+          </p>
         </div>
       )}
-    </PortalShell>
+    </div>
+  );
+
+  if (user) {
+    return (
+      <PortalShell
+        activeItem="Events"
+        role={role || "member"}
+        userName={fullName}
+        userRoleLabel={roleLabel}
+      >
+        {content}
+      </PortalShell>
+    );
+  }
+
+  return (
+    <div className="w-full bg-[#F8F8F7] min-h-screen flex flex-col justify-between">
+      <PublicNavbar />
+      <main className="max-w-[1440px] mx-auto px-5 sm:px-12 lg:px-[120px] py-12 w-full">
+        {content}
+      </main>
+      <PublicFooter />
+    </div>
   );
 }
