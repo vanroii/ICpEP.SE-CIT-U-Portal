@@ -13,9 +13,8 @@ export function PublicNavbar() {
   const navLinks = [
     { label: "Home", href: "/" },
     { label: "About", href: "/about" },
-    { label: "Events", href: "/events" },
+    { label: "Events", href: "/#events" },
     { label: "Officers", href: "/about#officers" },
-    { label: "Resources", href: "/about#resources" },
   ];
 
   return (

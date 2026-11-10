@@ -6,13 +6,6 @@ import { LogoLarge } from "@/components/ui/Logo";
 import { Code, Users, Shield, ArrowRight } from "lucide-react";
 
 export default function LandingHomePage() {
-  const statCards = [
-    { value: "1,248", label: "Verified members" },
-    { value: "24", label: "Events this year" },
-    { value: "12", label: "Active officers" },
-    { value: "5", label: "Partner companies" },
-  ];
-
   const featureCards = [
     {
       icon: Code,
@@ -78,7 +71,7 @@ export default function LandingHomePage() {
                   Register now
                 </Link>
                 <Link
-                  href="/events"
+                  href="#events"
                   className="h-[46px] px-[22px] flex items-center justify-center rounded-[8px] border-[1.5px] border-white text-white hover:bg-white/10 text-[14px] font-semibold transition-colors"
                 >
                   Explore events
@@ -91,23 +84,6 @@ export default function LandingHomePage() {
               <div className="absolute inset-0 bg-gradient-to-tr from-[#19A7D5]/10 to-transparent pointer-events-none" />
               <LogoLarge size={160} />
             </div>
-          </div>
-        </section>
-
-        {/* 3. Stats Section (1440x221, px-[120px] py-[56px]) */}
-        <section className="w-full bg-[#F8F8F7] px-5 sm:px-12 lg:px-[120px] py-[56px]">
-          <div className="max-w-[1200px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
-            {statCards.map((stat) => (
-              <div
-                key={stat.label}
-                className="bg-white border border-[#DEDBD8] rounded-[14px] p-[22px_24px] space-y-1.5"
-              >
-                <p className="text-[34px] leading-[40px] font-bold tracking-[-0.5px] text-[#0087B5]">
-                  {stat.value}
-                </p>
-                <p className="text-[14px] font-medium text-[#817B77]">{stat.label}</p>
-              </div>
-            ))}
           </div>
         </section>
 
@@ -148,7 +124,7 @@ export default function LandingHomePage() {
         </section>
 
         {/* 5. Events / Upcoming (1440x601, px-[120px] py-[96px], bg #F8F8F7) */}
-        <section className="w-full bg-[#F8F8F7] px-5 sm:px-12 lg:px-[120px] py-16 sm:py-[96px]">
+        <section id="events" className="w-full scroll-mt-[78px] bg-[#F8F8F7] px-5 sm:px-12 lg:px-[120px] py-16 sm:py-[96px]">
           <div className="max-w-[1200px] mx-auto space-y-10">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <div className="space-y-3">
@@ -160,7 +136,7 @@ export default function LandingHomePage() {
                 </h2>
               </div>
               <Link
-                href="/events"
+                href="#events"
                 className="text-[15px] font-semibold text-[#0087B5] hover:underline whitespace-nowrap"
               >
                 View all events →

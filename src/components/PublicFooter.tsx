@@ -6,10 +6,10 @@ export function PublicFooter() {
   return (
     <footer className="w-full bg-[#1C1713] text-[#D1CECB] pt-[72px] pb-[48px]">
       <div className="max-w-[1440px] mx-auto px-5 sm:px-12 lg:px-[120px] space-y-12">
-        {/* Footer 4 Columns */}
+        {/* Footer Columns */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 lg:gap-16">
           {/* Brand Column */}
-          <div className="md:col-span-5 space-y-4">
+          <div className="md:col-span-8 space-y-4">
             <div className="flex items-center gap-3">
               <LogoMark size={42} />
               <div className="flex flex-col leading-none">
@@ -28,7 +28,7 @@ export function PublicFooter() {
           </div>
 
           {/* Organization */}
-          <div className="md:col-span-2 space-y-3.5">
+          <div className="space-y-3.5 md:col-span-4 md:justify-self-end md:-translate-x-8">
             <h4 className="text-[14px] font-semibold text-white">Organization</h4>
             <ul className="space-y-3.5 text-[14px] text-[#D1CECB]">
               <li>
@@ -42,7 +42,7 @@ export function PublicFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/events" className="hover:text-white transition-colors">
+                <Link href="/#events" className="hover:text-white transition-colors">
                   Events
                 </Link>
               </li>
@@ -54,59 +54,6 @@ export function PublicFooter() {
             </ul>
           </div>
 
-          {/* Members */}
-          <div className="md:col-span-2 space-y-3.5">
-            <h4 className="text-[14px] font-semibold text-white">Members</h4>
-            <ul className="space-y-3.5 text-[14px] text-[#D1CECB]">
-              <li>
-                <Link href="/register" className="hover:text-white transition-colors">
-                  Register
-                </Link>
-              </li>
-              <li>
-                <Link href="/student" className="hover:text-white transition-colors">
-                  Member dashboard
-                </Link>
-              </li>
-              <li>
-                <Link href="/events" className="hover:text-white transition-colors">
-                  Upcoming events
-                </Link>
-              </li>
-              <li>
-                <Link href="/about#faq" className="hover:text-white transition-colors">
-                  FAQ
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Resources */}
-          <div className="md:col-span-3 space-y-3.5">
-            <h4 className="text-[14px] font-semibold text-white">Resources</h4>
-            <ul className="space-y-3.5 text-[14px] text-[#D1CECB]">
-              <li>
-                <Link href="/news" className="hover:text-white transition-colors">
-                  Study materials
-                </Link>
-              </li>
-              <li>
-                <Link href="/news" className="hover:text-white transition-colors">
-                  Announcements
-                </Link>
-              </li>
-              <li>
-                <Link href="/events" className="hover:text-white transition-colors">
-                  Photo gallery
-                </Link>
-              </li>
-              <li>
-                <Link href="/about#conduct" className="hover:text-white transition-colors">
-                  Code of conduct
-                </Link>
-              </li>
-            </ul>
-          </div>
         </div>
 
         {/* Divider */}
