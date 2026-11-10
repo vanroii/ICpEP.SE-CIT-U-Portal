@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 
 export async function register(
-  _prev: { error?: string; ok?: boolean } | undefined,
+  _prev: { error?: string; ok?: boolean; autoSignedIn?: boolean } | undefined,
   formData: FormData
 ) {
   const email = String(formData.get("email") || "").trim();
@@ -40,7 +40,7 @@ export async function register(
     const supabase = await createClient();
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -64,7 +64,11 @@ export async function register(
       return { error: signUpError.message };
     }
 
-    return { ok: true };
+    if (signUpData.session) {
+      return { ok: true, autoSignedIn: true };
+    }
+
+    return { ok: true, autoSignedIn: false };
   } catch (err: any) {
     return { error: err.message || "Failed to register account." };
   }
