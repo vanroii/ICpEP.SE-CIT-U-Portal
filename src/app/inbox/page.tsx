@@ -1,312 +1,250 @@
-"use client";
-
-import React, { useState } from "react";
+import React from "react";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 import { PortalShell } from "@/components/PortalShell";
-import { Search, Send, Plus } from "lucide-react";
+import { ComposeMessageModal } from "./ComposeMessageModal";
+import { MessageThreadView } from "./MessageThreadView";
+import { markMessageReadAction } from "./actions";
+import { ROLE_LABELS, type RoleCode } from "@/lib/roles";
+import { Search, Mail, Send, Inbox as InboxIcon } from "lucide-react";
+import Link from "next/link";
 
-export default function InboxPage() {
-  const [activeTab, setActiveTab] = useState<"all" | "unread" | "sent">("all");
-  const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [replyText, setReplyText] = useState("");
-  const [showCompose, setShowCompose] = useState(false);
+export const dynamic = "force-dynamic";
 
-  const [threads, setThreads] = useState<
-    Array<{
-      id: number;
-      sender: string;
-      avatarLetter: string;
-      time: string;
-      subject: string;
-      snippet: string;
-      isUnread: boolean;
-      messages: string[];
-    }>
-  >([]);
+export default async function InboxPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ tab?: string; thread?: string }>;
+}) {
+  const resolvedParams = searchParams ? await searchParams : {};
+  const activeTab = resolvedParams?.tab || "all";
+  const selectedThreadId = resolvedParams?.thread ? Number(resolvedParams.thread) : null;
 
-  const filteredThreads = threads.filter((t) => {
-    if (activeTab === "unread") return t.isUnread;
-    return true;
-  });
+  let user: any = null;
+  let role: RoleCode = "non_member";
+  let profile: any = null;
+  let inboxList: any[] = [];
+  let directory: any[] = [];
 
-  const activeThread = threads.find((t) => t.id === selectedId) || null;
+  try {
+    const supabase = await createClient();
+    const { data: authData } = await supabase.auth.getUser();
+    user = authData?.user ?? null;
 
-  const handleSendReply = () => {
-    if (!replyText.trim() || !selectedId) return;
-    setThreads((prev) =>
-      prev.map((t) =>
-        t.id === selectedId
-          ? { ...t, messages: [...t.messages, `You: ${replyText}`] }
-          : t
-      )
-    );
-    setReplyText("");
-  };
+    if (!user) {
+      redirect("/login?next=/inbox");
+    }
 
-  const toggleUnread = () => {
-    if (!selectedId) return;
-    setThreads((prev) =>
-      prev.map((t) =>
-        t.id === selectedId ? { ...t, isUnread: !t.isUnread } : t
-      )
-    );
-  };
+    const [{ data: r }, { data: p }, { data: dirData }] = await Promise.all([
+      supabase.rpc("auth_role"),
+      supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+      supabase.from("user_directory").select("*").limit(50),
+    ]);
 
-  const deleteCurrent = () => {
-    if (!selectedId) return;
-    setThreads((prev) => prev.filter((t) => t.id !== selectedId));
-    setSelectedId(null);
-  };
+    role = (r as RoleCode) ?? "non_member";
+    profile = p;
+    directory = dirData ?? [];
+
+    if (activeTab === "sent") {
+      const { data: sentMessages } = await supabase
+        .from("messages")
+        .select("id,subject,body,sent_at,sender_id,message_recipients(recipient:profiles(id,first_name,last_name,avatar_url))")
+        .eq("sender_id", user.id)
+        .is("sender_deleted_at", null)
+        .order("sent_at", { ascending: false });
+
+      inboxList = (sentMessages || []).map((m: any) => ({
+        id: m.id,
+        subject: m.subject,
+        body: m.body,
+        sent_at: m.sent_at,
+        sender_id: m.sender_id,
+        is_read: true,
+        sender: profile,
+        recipients: (m.message_recipients || []).map((mr: any) => mr.recipient),
+      }));
+    } else {
+      const { data: received } = await supabase
+        .from("message_recipients")
+        .select("is_read,message_id,messages(id,subject,body,sent_at,sender_id,sender:profiles!messages_sender_id_fkey(id,first_name,last_name,avatar_url))")
+        .eq("recipient_id", user.id)
+        .is("deleted_at", null)
+        .order("is_read", { ascending: true });
+
+      inboxList = (received || [])
+        .filter((r: any) => r.messages)
+        .map((r: any) => ({
+          id: r.messages.id,
+          subject: r.messages.subject,
+          body: r.messages.body,
+          sent_at: r.messages.sent_at,
+          sender_id: r.messages.sender_id,
+          is_read: r.is_read,
+          sender: r.messages.sender,
+          recipients: [profile],
+        }));
+
+      if (activeTab === "unread") {
+        inboxList = inboxList.filter((m) => !m.is_read);
+      }
+    }
+
+    // Auto mark as read if thread is opened
+    if (selectedThreadId && activeTab !== "sent") {
+      await supabase
+        .from("message_recipients")
+        .update({ is_read: true, read_at: new Date().toISOString() })
+        .eq("message_id", selectedThreadId)
+        .eq("recipient_id", user.id);
+    }
+  } catch (err: any) {
+    if (err?.message === "NEXT_REDIRECT") throw err;
+    console.error("Inbox data fetch error:", err);
+  }
+
+  const selectedMessage = selectedThreadId
+    ? inboxList.find((m) => m.id === selectedThreadId) || null
+    : inboxList[0] || null;
+
+  const fullName = profile ? `${profile.first_name} ${profile.last_name}` : "User";
+  const roleLabel = ROLE_LABELS[role] || "Student";
 
   return (
-    <PortalShell activeItem="Inbox">
-      <div className="space-y-7">
-        {/* Page Header (1096x62, §6.6) */}
+    <PortalShell
+      activeItem="Inbox"
+      role={role}
+      userName={fullName}
+      userRoleLabel={roleLabel}
+    >
+      <div className="space-y-6 max-w-[1096px]">
+        {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1.5">
             <h1 className="text-[30px] leading-[38px] font-bold text-[#1C1713] tracking-[-0.5px]">
-              Inbox
+              Internal Messaging
             </h1>
             <p className="text-[15px] text-[#817B77]">
-              Direct messages from officers, faculty, and admins.
+              Communicate directly with CIT-U chapter student officers and faculty.
             </p>
           </div>
 
-          <button
-            onClick={() => setShowCompose(true)}
-            className="h-[43px] px-[22px] rounded-[8px] bg-[#19A7D5] hover:bg-[#1695bf] active:bg-[#1383a8] text-[#12191C] font-semibold text-[14px] flex items-center gap-2 transition-colors self-start sm:self-auto"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Compose message</span>
-          </button>
+          <ComposeMessageModal directory={directory} />
         </div>
 
-        {/* Content Row: 2-Pane Inbox (400px list + 672px thread) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Column: Messages List (400px = lg:col-span-5) */}
-          <div className="lg:col-span-5 bg-white border border-[#DEDBD8] rounded-[16px] overflow-hidden">
-            {/* Search & Filter Header */}
-            <div className="p-5 pb-3.5 space-y-3">
-              <div className="h-[40px] px-3 bg-[#F8F8F7] border border-[#DEDBD8] rounded-[10px] flex items-center gap-2">
-                <Search className="w-4 h-4 text-[#928C88] shrink-0" />
-                <input
-                  type="text"
-                  placeholder="Search messages"
-                  className="w-full text-[13px] text-[#1C1713] placeholder-[#928C88] bg-transparent outline-none"
-                />
-              </div>
+        {/* Tab Filters */}
+        <div className="flex items-center gap-2.5">
+          <Link
+            href="/inbox"
+            className={`h-[32px] px-[14px] rounded-full text-[13px] font-semibold transition-colors flex items-center ${
+              activeTab === "all"
+                ? "bg-[#19A7D5] text-[#12191C]"
+                : "bg-white border border-[#DEDBD8] text-[#817B77] hover:text-[#1C1713]"
+            }`}
+          >
+            Inbox
+          </Link>
+          <Link
+            href="/inbox?tab=unread"
+            className={`h-[32px] px-[14px] rounded-full text-[13px] font-semibold transition-colors flex items-center ${
+              activeTab === "unread"
+                ? "bg-[#19A7D5] text-[#12191C]"
+                : "bg-white border border-[#DEDBD8] text-[#817B77] hover:text-[#1C1713]"
+            }`}
+          >
+            Unread
+          </Link>
+          <Link
+            href="/inbox?tab=sent"
+            className={`h-[32px] px-[14px] rounded-full text-[13px] font-semibold transition-colors flex items-center ${
+              activeTab === "sent"
+                ? "bg-[#19A7D5] text-[#12191C]"
+                : "bg-white border border-[#DEDBD8] text-[#817B77] hover:text-[#1C1713]"
+            }`}
+          >
+            Sent
+          </Link>
+        </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setActiveTab("all")}
-                  className={`h-[30px] px-3.5 rounded-full text-[13px] font-semibold transition-colors ${
-                    activeTab === "all"
-                      ? "bg-[#19A7D5] text-[#12191C]"
-                      : "bg-white border border-[#DEDBD8] text-[#817B77]"
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setActiveTab("unread")}
-                  className={`h-[30px] px-3.5 rounded-full text-[13px] font-semibold transition-colors ${
-                    activeTab === "unread"
-                      ? "bg-[#19A7D5] text-[#12191C]"
-                      : "bg-white border border-[#DEDBD8] text-[#817B77]"
-                  }`}
-                >
-                  Unread ({threads.filter((t) => t.isUnread).length})
-                </button>
-                <button
-                  onClick={() => setActiveTab("sent")}
-                  className={`h-[30px] px-3.5 rounded-full text-[13px] font-semibold transition-colors ${
-                    activeTab === "sent"
-                      ? "bg-[#19A7D5] text-[#12191C]"
-                      : "bg-white border border-[#DEDBD8] text-[#817B77]"
-                  }`}
-                >
-                  Sent
-                </button>
-              </div>
+        {/* Messaging Layout: Threads List + Thread Detail */}
+        <div className="bg-white border border-[#DEDBD8] rounded-[16px] overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-[550px] shadow-xs">
+          {/* Threads Column (5 cols) */}
+          <div className="md:col-span-5 border-r border-[#EEECEA] flex flex-col">
+            <div className="p-3 border-b border-[#EEECEA] bg-[#FAF9F8]">
+              <span className="text-[12px] font-bold text-[#817B77] uppercase tracking-wider">
+                {activeTab === "sent" ? "Sent Messages" : "Conversations"} ({inboxList.length})
+              </span>
             </div>
 
-            {/* Thread items */}
-            {filteredThreads.length > 0 ? (
-              <div className="divide-y divide-[#EEECEA]">
-                {filteredThreads.map((t) => {
-                  const isSelected = t.id === selectedId;
+            <div className="flex-1 overflow-y-auto divide-y divide-[#EEECEA]">
+              {inboxList.length > 0 ? (
+                inboxList.map((msg) => {
+                  const isSelected = selectedMessage?.id === msg.id;
+                  const isUnread = !msg.is_read;
+                  const partyName = activeTab === "sent"
+                    ? msg.recipients?.[0]
+                      ? `${msg.recipients[0].first_name} ${msg.recipients[0].last_name}`
+                      : "Recipient"
+                    : msg.sender
+                    ? `${msg.sender.first_name} ${msg.sender.last_name}`
+                    : "Chapter Member";
+
                   return (
-                    <button
-                      key={t.id}
-                      onClick={() => setSelectedId(t.id)}
-                      className={`w-full p-4 px-5 flex items-start gap-3 text-left transition-colors ${
-                        isSelected ? "bg-[#E8F7FC]" : "hover:bg-[#FAF9F8]"
+                    <Link
+                      key={msg.id}
+                      href={`/inbox?tab=${activeTab}&thread=${msg.id}`}
+                      className={`p-4 block transition-colors ${
+                        isSelected
+                          ? "bg-[#E3F6FC]/60"
+                          : isUnread
+                          ? "bg-[#E3F6FC]/20 hover:bg-[#E3F6FC]/40"
+                          : "hover:bg-[#FAF9F8]"
                       }`}
                     >
-                      <div className="w-[38px] h-[38px] rounded-full bg-[#E3F6FC] text-[#0087B5] flex items-center justify-center font-bold text-[14px] shrink-0 mt-0.5">
-                        {t.avatarLetter}
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className={`font-bold truncate ${isUnread ? "text-[#0087B5]" : "text-[#1C1713]"}`}>
+                          {partyName}
+                        </span>
+                        <span className="text-[11px] text-[#817B77] shrink-0">
+                          {new Date(msg.sent_at).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </span>
                       </div>
-
-                      <div className="flex-1 min-w-0 space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[14px] font-bold text-[#1C1713] truncate">
-                            {t.sender}
-                          </span>
-                          <span className="text-[12px] text-[#928C88] whitespace-nowrap ml-2">
-                            {t.time}
-                          </span>
-                        </div>
-                        <p className="text-[13px] font-semibold text-[#1C1713] truncate">
-                          {t.subject}
-                        </p>
-                        <p className="text-[12px] text-[#928C88] truncate">
-                          {t.snippet}
-                        </p>
-                      </div>
-
-                      {t.isUnread && (
-                        <span className="w-2 h-2 rounded-full bg-[#19A7D5] shrink-0 mt-2" />
-                      )}
-                    </button>
+                      <h4 className={`text-[13px] truncate ${isUnread ? "font-bold text-[#1C1713]" : "font-semibold text-[#514B47]"}`}>
+                        {msg.subject}
+                      </h4>
+                      <p className="text-[12px] text-[#817B77] truncate mt-0.5">
+                        {msg.body}
+                      </p>
+                    </Link>
                   );
-                })}
-              </div>
-            ) : (
-              <div className="p-8 text-center space-y-1">
-                <p className="text-[14px] font-semibold text-[#1C1713]">
-                  No messages
-                </p>
-                <p className="text-[12px] text-[#817B77]">
-                  Your inbox is currently empty.
-                </p>
-              </div>
-            )}
+                })
+              ) : (
+                <div className="p-8 text-center text-xs text-[#817B77] space-y-2">
+                  <InboxIcon className="w-6 h-6 mx-auto opacity-50" />
+                  <p>No messages in this folder.</p>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Right Column: Active Thread (672px = lg:col-span-7) */}
-          <div className="lg:col-span-7 bg-white border border-[#DEDBD8] rounded-[16px] p-6 sm:p-7 space-y-5">
-            {activeThread ? (
-              <>
-                {/* Thread Header */}
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                  <div className="space-y-2">
-                    <h2 className="text-[22px] leading-[30px] font-bold text-[#1C1713] tracking-[-0.3px]">
-                      {activeThread.subject}
-                    </h2>
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-[34px] h-[34px] rounded-full bg-[#E3F6FC] text-[#0087B5] flex items-center justify-center font-bold text-[13px] shrink-0">
-                        {activeThread.avatarLetter}
-                      </div>
-                      <div className="leading-tight">
-                        <p className="text-[14px] font-semibold text-[#1C1713]">
-                          {activeThread.sender}
-                        </p>
-                        <p className="text-[12px] text-[#817B77]">
-                          {activeThread.time}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={toggleUnread}
-                      className="h-[34px] px-3.5 rounded-[8px] border border-[#C3E8F5] text-[#0087B5] hover:bg-[#E3F6FC] text-[13px] font-semibold transition-colors"
-                    >
-                      Mark unread
-                    </button>
-                    <button
-                      onClick={deleteCurrent}
-                      className="h-[34px] px-3.5 rounded-[8px] border border-[#FCA5A5] text-[#B91C1C] hover:bg-[#FEE2E2] text-[13px] font-semibold transition-colors"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-
-                <div className="w-full h-[1px] bg-[#EEECEA]" />
-
-                {/* Message Body */}
-                <div className="space-y-3.5 text-[15px] leading-[25px] text-[#3D3733] py-2">
-                  {activeThread.messages.map((m, idx) => (
-                    <p key={idx}>{m}</p>
-                  ))}
-                </div>
-
-                {/* Reply Box */}
-                <div className="space-y-3 pt-3">
-                  <div className="rounded-[12px] bg-[#F8F8F7] border border-[#C9C5C2] p-3.5">
-                    <textarea
-                      rows={3}
-                      value={replyText}
-                      onChange={(e) => setReplyText(e.target.value)}
-                      placeholder="Write a reply…"
-                      className="w-full bg-transparent text-[14px] text-[#1C1713] placeholder-[#928C88] outline-none resize-none"
-                    />
-                  </div>
-                  <div>
-                    <button
-                      onClick={handleSendReply}
-                      className="h-[32px] px-3.5 rounded-[8px] bg-[#19A7D5] hover:bg-[#1695bf] active:bg-[#1383a8] text-[#12191C] text-[13px] font-semibold transition-colors flex items-center gap-1.5"
-                    >
-                      <Send className="w-3.5 h-3.5" />
-                      <span>Send reply</span>
-                    </button>
-                  </div>
-                </div>
-              </>
+          {/* Thread Content Column (7 cols) */}
+          <div className="md:col-span-7 flex flex-col bg-white">
+            {selectedMessage ? (
+              <MessageThreadView
+                message={selectedMessage}
+                currentUserId={user.id}
+              />
             ) : (
-              <div className="py-24 text-center space-y-2">
-                <p className="text-[16px] font-semibold text-[#1C1713]">
-                  No message selected
-                </p>
-                <p className="text-[14px] text-[#817B77] max-w-sm mx-auto">
-                  Select a message from the left or compose a new message to an officer or administrator.
-                </p>
+              <div className="flex-1 flex flex-col items-center justify-center p-12 text-center text-xs text-[#817B77] space-y-2">
+                <Mail className="w-8 h-8 opacity-40 text-[#0087B5]" />
+                <p>Select a message to view the conversation thread.</p>
               </div>
             )}
           </div>
         </div>
       </div>
-
-      {/* Compose Message Modal */}
-      {showCompose && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-[#DEDBD8] rounded-[16px] max-w-lg w-full p-6 space-y-4">
-            <h3 className="text-[20px] font-bold text-[#1C1713]">
-              Compose message
-            </h3>
-            <div className="space-y-3">
-              <input
-                placeholder="To: (Officer or Faculty name)"
-                className="w-full h-11 px-4 rounded-[10px] border border-[#C9C5C2] text-sm outline-none focus:border-[#19A7D5]"
-              />
-              <input
-                placeholder="Subject"
-                className="w-full h-11 px-4 rounded-[10px] border border-[#C9C5C2] text-sm outline-none focus:border-[#19A7D5]"
-              />
-              <textarea
-                rows={4}
-                placeholder="Type your message here..."
-                className="w-full p-4 rounded-[10px] border border-[#C9C5C2] text-sm outline-none focus:border-[#19A7D5]"
-              />
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                onClick={() => setShowCompose(false)}
-                className="px-4 py-2 text-sm text-[#817B77] hover:text-[#1C1713]"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => setShowCompose(false)}
-                className="px-4 py-2 bg-[#19A7D5] text-[#12191C] rounded-[8px] text-sm font-semibold"
-              >
-                Send
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </PortalShell>
   );
 }

@@ -5,16 +5,32 @@ import { createClient } from "@/lib/supabase/server";
 import { DASHBOARD_BY_ROLE, type RoleCode } from "@/lib/roles";
 
 export async function login(_prev: { error?: string } | undefined, formData: FormData) {
-  const email = String(formData.get("email") || "").trim();
+  const identifier = String(formData.get("email") || "").trim();
   const password = String(formData.get("password") || "");
   const next = String(formData.get("next") || "");
 
-  if (!email || !password) {
-    return { error: "Please enter both e-mail and password." };
+  if (!identifier || !password) {
+    return { error: "Please enter both your e-mail or student number and password." };
   }
 
   try {
     const supabase = await createClient();
+
+    // Resolve student number to email if not containing '@'
+    let email = identifier;
+    if (!identifier.includes("@")) {
+      try {
+        const { data: resolvedEmail } = await supabase.rpc("get_email_for_identifier", {
+          p_identifier: identifier,
+        });
+        if (resolvedEmail) {
+          email = resolvedEmail;
+        }
+      } catch {
+        // Fallback to identifier if RPC not yet created
+      }
+    }
+
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -22,7 +38,7 @@ export async function login(_prev: { error?: string } | undefined, formData: For
 
     if (signInError) {
       return {
-        error: "Invalid e-mail or password, or the account e-mail has not yet been verified.",
+        error: "Invalid e-mail/student number or password, or the account e-mail has not yet been verified.",
       };
     }
 

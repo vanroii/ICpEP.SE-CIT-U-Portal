@@ -1,299 +1,129 @@
-"use client";
-
-import React, { useState } from "react";
+import React from "react";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 import { PortalShell } from "@/components/PortalShell";
+import { EditProfileForm } from "@/app/profile/EditProfileForm";
+import { ChangePasswordForm } from "./ChangePasswordForm";
 import { Badge } from "@/components/ui/Badge";
-import { Lock, Check } from "lucide-react";
+import { ROLE_LABELS, type RoleCode } from "@/lib/roles";
+import { Lock, User, KeyRound, Shield } from "lucide-react";
 
-export default function AccountSettingsPage() {
-  const [eventReminders, setEventReminders] = useState(true);
-  const [announcements, setAnnouncements] = useState(true);
-  const [inboxNotifications, setInboxNotifications] = useState(true);
-  const [saved, setSaved] = useState(false);
+export const dynamic = "force-dynamic";
 
-  const [form, setForm] = useState({
-    fullName: "",
-    studentId: "",
-    email: "",
-    contact: "",
-    yearSection: "",
-    preferredName: "",
-  });
+export default async function AccountSettingsPage() {
+  let user: any = null;
+  let profile: any = null;
+  let role: RoleCode = "non_member";
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
-  };
+  try {
+    const supabase = await createClient();
+    const { data: authData } = await supabase.auth.getUser();
+    user = authData?.user ?? null;
+
+    if (!user) {
+      redirect("/login?next=/settings");
+    }
+
+    const [{ data: r }, { data: p }] = await Promise.all([
+      supabase.rpc("auth_role"),
+      supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+    ]);
+
+    role = (r as RoleCode) ?? "non_member";
+    profile = p;
+  } catch (err: any) {
+    if (err?.message === "NEXT_REDIRECT") throw err;
+    console.error("Settings fetch error:", err);
+  }
+
+  const isMember = role === "member";
+  const fullName = profile
+    ? `${profile.first_name} ${profile.middle_name ? profile.middle_name + " " : ""}${profile.last_name}`
+    : "User";
+  const roleLabel = ROLE_LABELS[role] || "Student";
+  const avatarLetter = (profile?.first_name || "U").charAt(0).toUpperCase();
 
   return (
-    <PortalShell activeItem="">
-      <div className="space-y-7">
-        {/* Page Header (1096x62, §6.4) */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <h1 className="text-[30px] leading-[38px] font-bold text-[#1C1713] tracking-[-0.5px]">
-              Account Settings
-            </h1>
-            <p className="text-[15px] text-[#817B77]">
-              Manage your personal information and account settings.
-            </p>
-          </div>
-
-          <button
-            onClick={handleSave}
-            className="h-[43px] px-[22px] rounded-[8px] bg-[#19A7D5] hover:bg-[#1695bf] active:bg-[#1383a8] text-[#12191C] font-semibold text-[14px] flex items-center gap-2 transition-colors self-start sm:self-auto"
-          >
-            {saved ? (
-              <>
-                <Check className="w-4 h-4" />
-                <span>Saved</span>
-              </>
-            ) : (
-              <span>Save changes</span>
-            )}
-          </button>
+    <PortalShell
+      activeItem="Settings"
+      role={role}
+      userName={fullName}
+      userRoleLabel={roleLabel}
+    >
+      <div className="space-y-7 max-w-[1096px]">
+        {/* Header */}
+        <div className="space-y-1.5">
+          <h1 className="text-[30px] leading-[38px] font-bold text-[#1C1713] tracking-[-0.5px]">
+            Account Settings
+          </h1>
+          <p className="text-[15px] text-[#817B77]">
+            Manage your personal profile information, security credentials, and preferences.
+          </p>
         </div>
 
-        {/* Content Row (1096x901 H24) */}
+        {/* Content Row */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Column (320px = lg:col-span-4) */}
+          {/* Left Column: Identity Snapshot */}
           <div className="lg:col-span-4 space-y-6">
-            <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-[28px_24px] flex flex-col items-center text-center space-y-3">
-              <div className="w-[96px] h-[96px] rounded-full bg-[#19A7D5] text-[#12191C] flex items-center justify-center font-bold text-[38px] select-none">
-                {form.preferredName ? form.preferredName.charAt(0).toUpperCase() : form.fullName ? form.fullName.charAt(0).toUpperCase() : "U"}
+            <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-6 flex flex-col items-center text-center space-y-3 shadow-xs">
+              <div className="w-[84px] h-[84px] rounded-full bg-[#19A7D5] text-[#12191C] flex items-center justify-center font-bold text-[36px] select-none">
+                {avatarLetter}
               </div>
+
               <div className="space-y-1">
-                <h3 className="text-[20px] font-bold text-[#1C1713]">
-                  {form.fullName || "User Profile"}
+                <h3 className="text-[18px] font-bold text-[#1C1713]">
+                  {fullName}
                 </h3>
-                <p className="text-[14px] text-[#817B77]">
-                  {form.studentId ? `${form.studentId} · ${form.yearSection || "CpE Student"}` : "Student Account"}
+                <p className="text-xs text-[#817B77]">
+                  {profile?.student_number || "Student Account"} · {profile?.program || "BS CpE"}
                 </p>
               </div>
 
               <div className="pt-1">
-                <Badge tone="verified">Verified</Badge>
+                <Badge tone={isMember ? "verified" : "neutral"}>
+                  {roleLabel}
+                </Badge>
               </div>
 
-              <button className="h-[34px] px-[14px] rounded-[8px] border border-[#C9C5C2] text-[#0087B5] hover:bg-[#FAF9F8] text-[13px] font-semibold transition-colors mt-2">
-                Change photo
-              </button>
+              {/* Locked credentials summary */}
+              <div className="w-full pt-4 border-t border-[#EEECEA] text-left text-xs space-y-2 text-[#514B47]">
+                <div>
+                  <span className="text-[#817B77] block text-[10px] uppercase font-bold">Institutional Email</span>
+                  <span className="font-medium text-[#1C1713] truncate block">{profile?.email}</span>
+                </div>
+                <div>
+                  <span className="text-[#817B77] block text-[10px] uppercase font-bold">CIT-U Student Number</span>
+                  <span className="font-mono font-medium text-[#1C1713]">{profile?.student_number || "—"}</span>
+                </div>
+                <div>
+                  <span className="text-[#817B77] block text-[10px] uppercase font-bold">Academic Program</span>
+                  <span className="font-medium text-[#1C1713]">{profile?.program || "BS Computer Engineering"}</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Right Column (752px = lg:col-span-8) */}
+          {/* Right Column: Edit Profile & Password Form */}
           <div className="lg:col-span-8 space-y-6">
-            {/* Personal Information Card */}
-            <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-[22px_24px] space-y-5">
-              <h3 className="text-[18px] font-semibold text-[#1C1713]">
-                Personal information
-              </h3>
-
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div className="space-y-2">
-                    <label className="block text-[14px] font-semibold text-[#3D3733]">
-                      Full name
-                    </label>
-                    <input
-                      type="text"
-                      value={form.fullName}
-                      onChange={(e) =>
-                        setForm({ ...form, fullName: e.target.value })
-                      }
-                      className="w-full h-[46px] px-4 rounded-[10px] bg-white border border-[#C9C5C2] text-[15px] text-[#1C1713] outline-none focus:border-[#19A7D5]"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-[14px] font-semibold text-[#3D3733]">
-                      Student ID
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        disabled
-                        value={form.studentId}
-                        className="w-full h-[46px] px-4 rounded-[10px] bg-[#F2F1F0] border border-[#C9C5C2] text-[15px] text-[#817B77] outline-none cursor-not-allowed pr-10"
-                      />
-                      <Lock className="w-4 h-4 text-[#817B77] absolute right-3.5 top-1/2 -translate-y-1/2" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div className="space-y-2">
-                    <label className="block text-[14px] font-semibold text-[#3D3733]">
-                      School email
-                    </label>
-                    <input
-                      type="email"
-                      value={form.email}
-                      onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      className="w-full h-[46px] px-4 rounded-[10px] bg-white border border-[#C9C5C2] text-[15px] text-[#1C1713] outline-none focus:border-[#19A7D5]"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-[14px] font-semibold text-[#3D3733]">
-                      Contact number
-                    </label>
-                    <input
-                      type="text"
-                      value={form.contact}
-                      onChange={(e) =>
-                        setForm({ ...form, contact: e.target.value })
-                      }
-                      className="w-full h-[46px] px-4 rounded-[10px] bg-white border border-[#C9C5C2] text-[15px] text-[#1C1713] outline-none focus:border-[#19A7D5]"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div className="space-y-2">
-                    <label className="block text-[14px] font-semibold text-[#3D3733]">
-                      Year & section
-                    </label>
-                    <input
-                      type="text"
-                      value={form.yearSection}
-                      onChange={(e) =>
-                        setForm({ ...form, yearSection: e.target.value })
-                      }
-                      className="w-full h-[46px] px-4 rounded-[10px] bg-white border border-[#C9C5C2] text-[15px] text-[#1C1713] outline-none focus:border-[#19A7D5]"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-[14px] font-semibold text-[#3D3733]">
-                      Preferred name
-                    </label>
-                    <input
-                      type="text"
-                      value={form.preferredName}
-                      onChange={(e) =>
-                        setForm({ ...form, preferredName: e.target.value })
-                      }
-                      className="w-full h-[46px] px-4 rounded-[10px] bg-white border border-[#C9C5C2] text-[15px] text-[#1C1713] outline-none focus:border-[#19A7D5]"
-                    />
-                  </div>
-                </div>
+            {/* Personal Information Form */}
+            <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-6 space-y-4 shadow-xs">
+              <div className="flex items-center gap-2 pb-3 border-b border-[#EEECEA]">
+                <User className="w-4 h-4 text-[#0087B5]" />
+                <h3 className="text-[16px] font-bold text-[#1C1713]">Personal Information</h3>
               </div>
+              <EditProfileForm profile={profile} />
             </div>
 
-            {/* Change Password Card */}
-            <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-[22px_24px] space-y-4">
-              <h3 className="text-[18px] font-semibold text-[#1C1713]">
-                Change password
-              </h3>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <label className="block text-[14px] font-semibold text-[#3D3733]">
-                    Current password
-                  </label>
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    className="w-full h-[46px] px-4 rounded-[10px] bg-white border border-[#C9C5C2] text-[15px] text-[#1C1713] placeholder-[#928C88] outline-none focus:border-[#19A7D5]"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="block text-[14px] font-semibold text-[#3D3733]">
-                    New password
-                  </label>
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    className="w-full h-[46px] px-4 rounded-[10px] bg-white border border-[#C9C5C2] text-[15px] text-[#1C1713] placeholder-[#928C88] outline-none focus:border-[#19A7D5]"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="block text-[14px] font-semibold text-[#3D3733]">
-                    Confirm new password
-                  </label>
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    className="w-full h-[46px] px-4 rounded-[10px] bg-white border border-[#C9C5C2] text-[15px] text-[#1C1713] placeholder-[#928C88] outline-none focus:border-[#19A7D5]"
-                  />
-                </div>
+            {/* Change Password Form */}
+            <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-6 space-y-4 shadow-xs">
+              <div className="flex items-center gap-2 pb-3 border-b border-[#EEECEA]">
+                <KeyRound className="w-4 h-4 text-[#0087B5]" />
+                <h3 className="text-[16px] font-bold text-[#1C1713]">Security & Password</h3>
               </div>
-
-              <div>
-                <button className="h-[32px] px-[14px] rounded-[8px] bg-[#19A7D5] hover:bg-[#1695bf] text-[#12191C] text-[13px] font-semibold transition-colors">
-                  Update password
-                </button>
-              </div>
-            </div>
-
-            {/* Notifications Card */}
-            <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-[22px_24px] space-y-4">
-              <h3 className="text-[18px] font-semibold text-[#1C1713]">
-                Notifications
-              </h3>
-
-              <div className="divide-y divide-[#EEECEA]">
-                {/* Event Reminders */}
-                <div className="py-3.5 first:pt-1 flex items-center justify-between gap-4">
-                  <div>
-                    <h4 className="text-[15px] font-semibold text-[#1C1713]">
-                      Event reminders
-                    </h4>
-                    <p className="text-[13px] text-[#817B77]">
-                      Get notified a day before events you RSVP to
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setEventReminders(!eventReminders)}
-                    className={`w-[44px] h-[24px] rounded-full transition-colors flex items-center px-0.5 ${
-                      eventReminders ? "bg-[#19A7D5] justify-end" : "bg-[#C9C5C2] justify-start"
-                    }`}
-                  >
-                    <span className="w-[18px] h-[18px] rounded-full bg-white shadow-xs" />
-                  </button>
-                </div>
-
-                {/* Announcements */}
-                <div className="py-3.5 flex items-center justify-between gap-4">
-                  <div>
-                    <h4 className="text-[15px] font-semibold text-[#1C1713]">
-                      Announcements
-                    </h4>
-                    <p className="text-[13px] text-[#817B77]">
-                      New posts from the officers
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setAnnouncements(!announcements)}
-                    className={`w-[44px] h-[24px] rounded-full transition-colors flex items-center px-0.5 ${
-                      announcements ? "bg-[#19A7D5] justify-end" : "bg-[#C9C5C2] justify-start"
-                    }`}
-                  >
-                    <span className="w-[18px] h-[18px] rounded-full bg-white shadow-xs" />
-                  </button>
-                </div>
-
-                {/* Direct message notifications */}
-                <div className="py-3.5 flex items-center justify-between gap-4">
-                  <div>
-                    <h4 className="text-[15px] font-semibold text-[#1C1713]">
-                      Direct message notifications
-                    </h4>
-                    <p className="text-[13px] text-[#817B77]">
-                      Get notified when officers or peers send you an inbox message
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setInboxNotifications(!inboxNotifications)}
-                    className={`w-[44px] h-[24px] rounded-full transition-colors flex items-center px-0.5 ${
-                      inboxNotifications ? "bg-[#19A7D5] justify-end" : "bg-[#C9C5C2] justify-start"
-                    }`}
-                  >
-                    <span className="w-[18px] h-[18px] rounded-full bg-white shadow-xs" />
-                  </button>
-                </div>
-              </div>
+              <p className="text-xs text-[#817B77]">
+                Update your account password. Make sure it is at least 8 characters long.
+              </p>
+              <ChangePasswordForm />
             </div>
           </div>
         </div>
@@ -301,4 +131,3 @@ export default function AccountSettingsPage() {
     </PortalShell>
   );
 }
-
