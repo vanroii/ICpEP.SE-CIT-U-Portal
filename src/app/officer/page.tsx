@@ -6,6 +6,7 @@ import { PortalShell } from "@/components/PortalShell";
 import { CreateEventModal } from "./CreateEventModal";
 import { CreatePostModal } from "./CreatePostModal";
 import { ReviewApplicationModal } from "./ReviewApplicationModal";
+import { RoleMasterlistManager } from "@/components/RoleMasterlistManager";
 import { Badge } from "@/components/ui/Badge";
 import {
   Users,
@@ -124,7 +125,7 @@ export default async function OfficerPortalPage({
               Officer Control Panel
             </h1>
             <p className="text-[15px] text-[#817B77]">
-              Manage chapter operations, verify membership applications, and track participation.
+              Manage chapter operations, assign members, verify applications, and track participation.
             </p>
           </div>
 
@@ -133,6 +134,8 @@ export default async function OfficerPortalPage({
             <CreatePostModal />
           </div>
         </div>
+
+        <RoleMasterlistManager mode="members" />
 
         {/* 4 Core Stat Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

@@ -18,6 +18,7 @@ The **ICpEP.SE CIT-U Organization Portal** is a web portal designed and develope
 - **Membership Management:**
   - Non-Member students can apply for verified ICpEP membership.
   - Officers review applications, assign official membership numbers, and approve or decline with remarks.
+  - Faculty can assign student accounts as officers; officers can assign members individually or from a CSV.
   - Profile roles automatically synchronize between `non_member` and `member` via database triggers.
 - **Events & Registration:**
   - Officers publish, edit, and archive chapter events and workshops.
@@ -64,7 +65,7 @@ Sampled from the official ICpEP.SE CIT-U Chapter Badge:
 | `/login`, `/register` | Signed-out visitors | Redirects signed-in users to their role dashboard |
 | `/student` | `non_member`, `member` | Membership status, registrations, events feed |
 | `/officer` | `officer`, `admin` | Manage events, posts, verify membership, view reports |
-| `/faculty` | `faculty`, `admin` | Read-only oversight of activities & analytics (BR-09) |
+| `/faculty` | `faculty`, `admin` | Student masterlist upload, officer assignment, oversight & analytics |
 | `/admin` | `admin` | User directory, role assignment, account activation, settings |
 | `/inbox` | `non_member`, `member`, `officer`, `faculty` | Internal messaging network |
 | `/notifications`, `/profile` | All authenticated roles | Own rows only (BR-07) |
@@ -93,8 +94,17 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ### 2. Run Database Migrations & Seed
 1. Open your Supabase Dashboard → **SQL Editor**.
 2. Run `supabase/migrations/0001_schema.sql` top to bottom.
-3. Run `supabase/seed.sql` to populate current school years, events, posts, and settings.
-4. Under **Authentication → URL Configuration**, add `http://localhost:3000/auth/callback` to Redirect URLs.
+3. Run `supabase/migrations/0002_fixes_and_helpers.sql`, then `0003_fix_faculty_role.sql` and `0004_role_assignment_masterlists.sql`.
+4. Run `supabase/seed.sql` to populate current school years, events, posts, and settings.
+5. Under **Authentication → URL Configuration**, add `http://localhost:3000/auth/callback` to Redirect URLs.
+
+After applying database migrations in an existing project, allow PostgREST's schema cache to reload. If an RPC is still reported as missing, run `NOTIFY pgrst, 'reload schema';` in the Supabase SQL Editor and retry after a short wait.
+
+### Student and Member Masterlists
+
+Faculty can import a student CSV with `student_number`, `first_name`, and `last_name` columns. Optional columns are `middle_name`, `email`, `program`, and `year_level`. The roster is saved even when a student has not registered yet; matching registered student profiles are updated. Faculty can also assign an existing student account as an officer by student number.
+
+Officers can import a member CSV with `student_number` and `membership_no` columns, or assign a member individually. Member imports require existing student accounts and apply active memberships for the current school year.
 
 ### 3. Install & Start Development Server
 ```bash

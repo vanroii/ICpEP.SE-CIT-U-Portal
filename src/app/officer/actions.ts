@@ -2,6 +2,45 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import type { MemberMasterlistRow } from "@/lib/masterlist";
+
+export async function officerAssignMemberAction(
+  studentNumber: string,
+  membershipNo: string
+) {
+  const cleanedStudentNumber = studentNumber.trim();
+  const cleanedMembershipNo = membershipNo.trim();
+  if (!cleanedStudentNumber || !cleanedMembershipNo) {
+    return { error: "Student number and membership number are required." };
+  }
+  return importMemberMasterlistAction([{
+    student_number: cleanedStudentNumber,
+    membership_no: cleanedMembershipNo,
+  }]);
+}
+
+export async function importMemberMasterlistAction(rows: MemberMasterlistRow[]) {
+  if (!Array.isArray(rows) || rows.length === 0 || rows.length > 5000) {
+    return { error: "Upload between 1 and 5,000 member rows." };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("import_member_masterlist", {
+    p_rows: rows,
+  });
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/officer");
+  revalidatePath("/faculty");
+  revalidatePath("/student");
+  revalidatePath("/admin");
+  return {
+    success: true,
+    imported: data.imported as number,
+    matched: data.matched as number,
+  };
+}
 
 export async function createEventAction(formData: FormData) {
   try {
