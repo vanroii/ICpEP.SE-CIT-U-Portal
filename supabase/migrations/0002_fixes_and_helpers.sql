@@ -31,58 +31,82 @@ on conflict (label) do update
 create or replace function public.handle_new_user() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare
-  v_meta jsonb := coalesce(new.raw_user_meta_data, '{}'::jsonb);
-  v_role smallint;
-  v_sy   smallint;
-  v_first text;
-  v_last  text;
-  v_program text;
-  v_year smallint;
+  v_meta       jsonb    := coalesce(new.raw_user_meta_data, '{}'::jsonb);
+  v_role_code  text;
+  v_role_id    smallint;
+  v_sy         smallint;
+  v_first      text;
+  v_last       text;
+  v_is_faculty boolean;
 begin
-  -- Resolve non_member role
-  select id into v_role from public.roles where code = 'non_member';
-  if v_role is null then
+  -- Determine role from metadata (student=non_member, faculty=faculty).
+  v_is_faculty := (
+    lower(coalesce(v_meta->>'role', '')) = 'faculty'
+    or nullif(trim(coalesce(v_meta->>'employee_id', '')), '') is not null
+    or (nullif(trim(coalesce(v_meta->>'department', '')), '') is not null and nullif(trim(coalesce(v_meta->>'student_number', '')), '') is null)
+  );
+  v_role_code  := case when v_is_faculty then 'faculty' else 'non_member' end;
+
+  -- Resolve role_id
+  select id into v_role_id from public.roles where code = v_role_code;
+  if v_role_id is null then
     insert into public.roles (code, name, description)
-    values ('non_member', 'Non-Member Student', 'CpE student with an account who is not (yet) a verified ICpEP member')
+    values (
+      v_role_code,
+      case when v_is_faculty then 'Faculty / Adviser' else 'Non-Member Student' end,
+      case when v_is_faculty then 'Read-only oversight of activities, reports and announcements'
+           else 'CpE student with an account who is not (yet) a verified ICpEP member' end
+    )
     on conflict (code) do update set name = excluded.name
-    returning id into v_role;
+    returning id into v_role_id;
   end if;
 
   -- Resolve safe first & last names
-  v_first := coalesce(nullif(trim(v_meta->>'first_name'), ''), split_part(new.email, '@', 1), 'Student');
-  v_last  := coalesce(nullif(trim(v_meta->>'last_name'), ''), 'Member');
-  v_program := coalesce(nullif(trim(v_meta->>'program'), ''), 'BS Computer Engineering');
-
-  v_year := case
-    when (v_meta->>'year_level') ~ '^[1-6]$' then (v_meta->>'year_level')::smallint
-    else 1
-  end;
+  v_first := coalesce(nullif(trim(v_meta->>'first_name'), ''),
+                      split_part(new.email, '@', 1),
+                      case when v_is_faculty then 'Faculty' else 'Student' end);
+  v_last  := coalesce(nullif(trim(v_meta->>'last_name'), ''),
+                      case when v_is_faculty then 'Adviser' else 'Member' end);
 
   insert into public.profiles (
-    id, role_id, email, student_number, first_name, middle_name, last_name,
-    program, year_level, contact_number
+    id, role_id, email,
+    first_name, middle_name, last_name,
+    student_number, employee_id, program, year_level,
+    department, mobile_number, contact_number
   ) values (
     new.id,
-    v_role,
+    v_role_id,
     lower(new.email),
-    nullif(trim(v_meta->>'student_number'), ''),
     v_first,
     nullif(trim(v_meta->>'middle_name'), ''),
     v_last,
-    v_program,
-    v_year,
-    nullif(trim(v_meta->>'contact_number'), '')
+    case when v_is_faculty then null else nullif(trim(v_meta->>'student_number'), '') end,
+    case when v_is_faculty then nullif(trim(v_meta->>'employee_id'), '') else null end,
+    case when v_is_faculty then null else coalesce(nullif(trim(v_meta->>'program'), ''), 'BS Computer Engineering') end,
+    case
+      when v_is_faculty then null
+      when (v_meta->>'year_level') ~ '^[1-6]$' then (v_meta->>'year_level')::smallint
+      else 1
+    end,
+    nullif(trim(v_meta->>'department'), ''),
+    coalesce(nullif(trim(v_meta->>'mobile_number'), ''), nullif(trim(v_meta->>'contact_number'), '')),
+    coalesce(nullif(trim(v_meta->>'mobile_number'), ''), nullif(trim(v_meta->>'contact_number'), ''))
   )
   on conflict (id) do update
-    set email = excluded.email,
-        first_name = coalesce(nullif(excluded.first_name, ''), profiles.first_name),
-        last_name = coalesce(nullif(excluded.last_name, ''), profiles.last_name),
+    set role_id        = excluded.role_id,
+        email          = excluded.email,
+        first_name     = coalesce(nullif(excluded.first_name, ''), profiles.first_name),
+        last_name      = coalesce(nullif(excluded.last_name,  ''), profiles.last_name),
+        middle_name    = coalesce(excluded.middle_name,   profiles.middle_name),
         student_number = coalesce(excluded.student_number, profiles.student_number),
-        program = coalesce(excluded.program, profiles.program),
-        year_level = coalesce(excluded.year_level, profiles.year_level);
+        employee_id    = coalesce(excluded.employee_id, profiles.employee_id),
+        mobile_number  = coalesce(excluded.mobile_number, profiles.mobile_number),
+        department     = coalesce(excluded.department,    profiles.department),
+        program        = coalesce(excluded.program,       profiles.program),
+        year_level     = coalesce(excluded.year_level,    profiles.year_level);
 
   -- "I am already an ICpEP member" on registration form -> pending membership application
-  if coalesce((v_meta->>'claims_membership')::boolean, false) then
+  if (not v_is_faculty) and coalesce((v_meta->>'claims_membership')::boolean, false) then
     select id into v_sy from public.school_years where is_current limit 1;
     if v_sy is null then
       select id into v_sy from public.school_years order by id desc limit 1;
@@ -102,7 +126,7 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users for each row execute function public.handle_new_user();
 
--- 4. Identifier-to-Email resolver for dual email/student-ID login
+-- 4. Identifier-to-Email resolver for dual email/student-ID/employee-ID login
 create or replace function public.get_email_for_identifier(p_identifier text)
 returns text
 language plpgsql security definer set search_path = public as $$
@@ -116,7 +140,10 @@ begin
 
   select lower(email) into v_email
     from public.profiles
-   where lower(trim(student_number)) = lower(v_clean)
+   where (
+     lower(trim(coalesce(student_number, ''))) = lower(v_clean)
+     or lower(trim(coalesce(employee_id, ''))) = lower(v_clean)
+   )
      and is_active
    limit 1;
 

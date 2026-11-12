@@ -113,7 +113,7 @@ export default async function StudentHomePage() {
       userName={fullName}
       userRoleLabel={roleLabel}
     >
-      <div className="space-y-8 max-w-[1096px]">
+      <div className="space-y-8 w-full">
         {/* Welcome Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 sm:p-8 rounded-[20px] hero-gradient text-white shadow-sm">
           <div className="space-y-1.5">

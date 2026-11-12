@@ -14,8 +14,13 @@ export async function GET(request: NextRequest) {
   const supabase = await createClient();
 
   if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data: sessionData, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      if (sessionData?.user?.user_metadata?.role === "faculty") {
+        try {
+          await supabase.rpc("sync_user_role");
+        } catch {}
+      }
       const { data: role } = await supabase.rpc("auth_role");
       const destination = next || (role ? DASHBOARD_BY_ROLE[role as RoleCode] : "/student");
       return NextResponse.redirect(new URL(destination, origin));
@@ -23,8 +28,13 @@ export async function GET(request: NextRequest) {
   }
 
   if (token_hash && type) {
-    const { error } = await supabase.auth.verifyOtp({ type, token_hash });
+    const { data: otpData, error } = await supabase.auth.verifyOtp({ type, token_hash });
     if (!error) {
+      if (otpData?.user?.user_metadata?.role === "faculty") {
+        try {
+          await supabase.rpc("sync_user_role");
+        } catch {}
+      }
       const { data: role } = await supabase.rpc("auth_role");
       const destination = next || (role ? DASHBOARD_BY_ROLE[role as RoleCode] : "/student");
       return NextResponse.redirect(new URL(destination, origin));

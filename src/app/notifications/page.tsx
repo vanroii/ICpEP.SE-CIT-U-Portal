@@ -76,7 +76,7 @@ export default async function NotificationsPage({
       userName={fullName}
       userRoleLabel={roleLabel}
     >
-      <div className="space-y-7 max-w-[1096px]">
+      <div className="space-y-7 w-full">
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1.5">

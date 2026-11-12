@@ -50,7 +50,7 @@ export default async function AccountSettingsPage() {
       userName={fullName}
       userRoleLabel={roleLabel}
     >
-      <div className="space-y-7 max-w-[1096px]">
+      <div className="space-y-7 w-full">
         {/* Header */}
         <div className="space-y-1.5">
           <h1 className="text-[30px] leading-[38px] font-bold text-[#1C1713] tracking-[-0.5px]">

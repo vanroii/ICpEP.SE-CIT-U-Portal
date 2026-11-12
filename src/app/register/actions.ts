@@ -85,6 +85,13 @@ async function registerCore(
     }
 
     if (signUpData.session) {
+      if (roleHint === "faculty") {
+        try {
+          await supabase.rpc("sync_user_role");
+        } catch {
+          // Non-fatal if rpc not deployed yet
+        }
+      }
       return { ok: true, autoSignedIn: true };
     }
 
