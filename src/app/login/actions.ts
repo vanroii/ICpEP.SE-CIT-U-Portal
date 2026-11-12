@@ -31,15 +31,24 @@ export async function login(_prev: { error?: string } | undefined, formData: For
       }
     }
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (signInError) {
       return {
-        error: "Invalid e-mail/student number or password, or the account e-mail has not yet been verified.",
+        error: "Invalid e-mail, student number or password, or the account e-mail has not yet been verified.",
       };
+    }
+
+    // Auto-heal faculty role if user signed up with role 'faculty'
+    if (signInData?.user?.user_metadata?.role === "faculty") {
+      try {
+        await supabase.rpc("sync_user_role");
+      } catch {
+        // Non-fatal if rpc not deployed
+      }
     }
 
     // Check account status and role

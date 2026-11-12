@@ -78,7 +78,7 @@ export function ApplyMembershipModal() {
                 <Input
                   label="Claimed Membership / Reference Number (Optional)"
                   name="claimed_membership_no"
-                  placeholder="e.g. ICPEP-2026-XXXX or Receipt No."
+                  placeholder="e.g. cpe-###-### or Receipt No."
                   helperText="Leave empty if this is a new membership registration."
                 />
 

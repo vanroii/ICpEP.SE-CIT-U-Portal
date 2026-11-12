@@ -76,8 +76,10 @@ export default async function AdminPage({
     const nameMatch = `${p.first_name} ${p.last_name}`.toLowerCase().includes(search);
     const emailMatch = p.email?.toLowerCase().includes(search);
     const studentMatch = p.student_number?.toLowerCase().includes(search);
+    const employeeMatch = p.employee_id?.toLowerCase().includes(search);
+    const deptMatch = p.department?.toLowerCase().includes(search);
     const roleMatch = p.roles?.name?.toLowerCase().includes(search);
-    return nameMatch || emailMatch || studentMatch || roleMatch;
+    return nameMatch || emailMatch || studentMatch || employeeMatch || deptMatch || roleMatch;
   });
 
   const totalUsers = allProfiles.length;
@@ -95,7 +97,7 @@ export default async function AdminPage({
       userName={fullName}
       userRoleLabel={roleLabel}
     >
-      <div className="space-y-8 max-w-[1096px]">
+      <div className="space-y-8 w-full">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1.5">
@@ -110,22 +112,20 @@ export default async function AdminPage({
           <div className="flex items-center gap-2">
             <Link
               href="/admin"
-              className={`h-[36px] px-4 rounded-[8px] font-semibold text-xs flex items-center transition-colors ${
-                activeTab === "users"
+              className={`h-[36px] px-4 rounded-[8px] font-semibold text-xs flex items-center transition-colors ${activeTab === "users"
                   ? "bg-[#19A7D5] text-[#12191C]"
                   : "bg-white border border-[#DEDBD8] text-[#817B77] hover:text-[#1C1713]"
-              }`}
+                }`}
             >
               <Users className="w-4 h-4 mr-1.5" />
               Users Directory
             </Link>
             <Link
               href="/admin?tab=settings"
-              className={`h-[36px] px-4 rounded-[8px] font-semibold text-xs flex items-center transition-colors ${
-                activeTab === "settings"
+              className={`h-[36px] px-4 rounded-[8px] font-semibold text-xs flex items-center transition-colors ${activeTab === "settings"
                   ? "bg-[#19A7D5] text-[#12191C]"
                   : "bg-white border border-[#DEDBD8] text-[#817B77] hover:text-[#1C1713]"
-              }`}
+                }`}
             >
               <Settings className="w-4 h-4 mr-1.5" />
               Site Settings
@@ -214,8 +214,8 @@ export default async function AdminPage({
                   <thead>
                     <tr className="border-b border-[#EEECEA] text-[#817B77] bg-[#FAF9F8]">
                       <th className="py-3 px-4 font-bold">NAME & EMAIL</th>
-                      <th className="py-3 px-4 font-bold">STUDENT NUMBER</th>
-                      <th className="py-3 px-4 font-bold">PROGRAM & YR</th>
+                      <th className="py-3 px-4 font-bold">ID NUMBER</th>
+                      <th className="py-3 px-4 font-bold">PROGRAM / DEPT</th>
                       <th className="py-3 px-4 font-bold">ROLE</th>
                       <th className="py-3 px-4 font-bold">STATUS</th>
                       <th className="py-3 px-4 font-bold text-right">MANAGE</th>
@@ -231,10 +231,14 @@ export default async function AdminPage({
                           <p className="text-[11px] text-[#817B77]">{u.email}</p>
                         </td>
                         <td className="py-3 px-4 font-mono font-medium text-[#1C1713]">
-                          {u.student_number || "—"}
+                          {u.roles?.code === "faculty"
+                            ? (u.employee_id || u.department || "—")
+                            : (u.student_number || "—")}
                         </td>
                         <td className="py-3 px-4 text-[#514B47]">
-                          {u.program} {u.year_level ? `· Yr ${u.year_level}` : ""}
+                          {u.roles?.code === "faculty"
+                            ? (u.department ? `${u.department} · Faculty` : "Faculty")
+                            : `${u.program || "BS CpE"} ${u.year_level ? `· Yr ${u.year_level}` : ""}`}
                         </td>
                         <td className="py-3 px-4">
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#E3F6FC] text-[#0087B5]">

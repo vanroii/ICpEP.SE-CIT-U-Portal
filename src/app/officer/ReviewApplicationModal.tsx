@@ -145,7 +145,7 @@ export function ReviewApplicationModal({
                   value={membershipNo}
                   onChange={(e) => setMembershipNo(e.target.value)}
                   required
-                  placeholder="e.g. ICPEP-CITU-2026-0042"
+                  placeholder="e.g. cpe-###-###"
                   helperText="This number is assigned to the member's profile for AY 2026–2027."
                 />
               ) : null}

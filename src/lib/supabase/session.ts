@@ -29,7 +29,14 @@ export async function updateSession(request: NextRequest) {
 
     if (user) {
       // auth_role() returns NULL for deactivated accounts (BR-08)
-      const { data } = await supabase.rpc("auth_role");
+      let { data } = await supabase.rpc("auth_role");
+      if (data === "non_member" && user.user_metadata?.role === "faculty") {
+        try {
+          await supabase.rpc("sync_user_role");
+          const { data: refreshedRole } = await supabase.rpc("auth_role");
+          data = refreshedRole;
+        } catch {}
+      }
       role = (data as RoleCode | null) ?? null;
     }
     return { response, user, role };
