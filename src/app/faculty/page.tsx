@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PortalShell } from "@/components/PortalShell";
 import { CreateEventModal } from "@/app/officer/CreateEventModal";
 import { CreatePostModal } from "@/app/officer/CreatePostModal";
+import { RoleMasterlistManager } from "@/components/RoleMasterlistManager";
 import {
   Info,
   Calendar,
@@ -87,7 +88,7 @@ export default async function FacultyPortalPage() {
               Faculty &amp; Adviser Portal
             </h1>
             <p className="text-[15px] text-[#817B77]">
-              Oversee chapter activities, create events, and review analytical reports.
+              Oversee chapter activities, manage the student roster, assign officers, and review reports.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -100,9 +101,11 @@ export default async function FacultyPortalPage() {
         <div className="bg-[#FAF9F8] border border-[#DEDBD8] rounded-[14px] p-4 flex items-center gap-3 text-xs text-[#514B47]">
           <Info className="w-4 h-4 text-[#0087B5] shrink-0" />
           <span>
-            <strong>Faculty access:</strong> You can create and manage events and posts. Membership verification is handled by Chapter Officers.
+            <strong>Faculty access:</strong> You can manage the student masterlist and assign student accounts as officers. Membership verification is handled by Chapter Officers.
           </span>
         </div>
+
+        <RoleMasterlistManager mode="students" />
 
         {/* Core Stat Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

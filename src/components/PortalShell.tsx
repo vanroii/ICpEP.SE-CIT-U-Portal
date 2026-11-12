@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
@@ -85,10 +85,12 @@ function SidebarNav({
   navItems,
   activeItemOverride,
   onNavigate,
+  collapsed,
 }: {
   navItems: NavItem[];
   activeItemOverride?: string;
   onNavigate: () => void;
+  collapsed: boolean;
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -121,7 +123,11 @@ function SidebarNav({
             key={item.label + item.href}
             href={item.href}
             onClick={onNavigate}
-            className={`h-[42px] px-[14px] rounded-[10px] flex items-center gap-3 transition-colors ${
+            title={collapsed ? item.label : undefined}
+            aria-label={collapsed ? item.label : undefined}
+            className={`h-[42px] rounded-[10px] flex items-center transition-colors ${
+              collapsed ? "px-[14px] gap-3 lg:justify-center lg:px-0 lg:gap-0" : "px-[14px] gap-3"
+            } ${
               active
                 ? "bg-[#E3F6FC] text-[#0087B5]"
                 : "text-[#D1CECB] hover:bg-[#2C2622] hover:text-white"
@@ -131,7 +137,7 @@ function SidebarNav({
               className={`w-5 h-5 shrink-0 ${active ? "text-[#0087B5]" : "text-[#D1CECB]"}`}
             />
             <span
-              className={`text-[14px] truncate ${
+              className={`text-[14px] truncate ${collapsed ? "lg:sr-only" : ""} ${
                 active ? "font-semibold text-[#0087B5]" : "font-medium"
               }`}
             >
@@ -152,7 +158,24 @@ export function PortalShell({
   userRoleLabel,
 }: PortalShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const navItems = getNavItems(role);
+
+  useEffect(() => {
+    if (!sidebarOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSidebarOpen(false);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [sidebarOpen]);
 
   const displayName =
     userName ||
@@ -170,9 +193,29 @@ export function PortalShell({
 
   const sidebarContent = (
     <>
-      <div className="space-y-6">
-        {/* Logo */}
-        <div className="flex items-center gap-3 select-none">
+      <div className={`space-y-6 ${sidebarCollapsed ? "lg:space-y-6" : ""}`}>
+        <button
+          type="button"
+          onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
+          title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-expanded={!sidebarCollapsed}
+          className={`hidden lg:flex w-full items-center select-none ${
+            sidebarCollapsed ? "justify-center" : "gap-3"
+          }`}
+        >
+          <LogoMark size={40} />
+          {!sidebarCollapsed && (
+            <div className="flex flex-col leading-none text-left">
+              <span className="text-[16px] font-bold text-white tracking-[-0.2px]">ICpEP.SE</span>
+              <span className="text-[11px] font-medium text-[#AAA4A0] mt-0.5">
+                {role === "admin" ? "Admin console" : "CIT-U Chapter"}
+              </span>
+            </div>
+          )}
+        </button>
+
+        <div className="flex items-center gap-3 lg:hidden">
           <LogoMark size={40} />
           <div className="flex flex-col leading-none">
             <span className="text-[16px] font-bold text-white tracking-[-0.2px]">ICpEP.SE</span>
@@ -189,10 +232,14 @@ export function PortalShell({
               {navItems.map((item) => (
                 <div
                   key={item.label}
-                  className="h-[42px] px-[14px] rounded-[10px] flex items-center gap-3 text-[#D1CECB]"
+                  className={`h-[42px] px-[14px] rounded-[10px] flex items-center gap-3 text-[#D1CECB] ${
+                    sidebarCollapsed ? "lg:justify-center lg:px-0 lg:gap-0" : ""
+                  }`}
                 >
                   <item.icon className="w-5 h-5 shrink-0 text-[#D1CECB]" />
-                  <span className="text-[14px] font-medium">{item.label}</span>
+                  <span className={`text-[14px] font-medium ${sidebarCollapsed ? "lg:sr-only" : ""}`}>
+                    {item.label}
+                  </span>
                 </div>
               ))}
             </nav>
@@ -202,34 +249,42 @@ export function PortalShell({
             navItems={navItems}
             activeItemOverride={activeItem}
             onNavigate={closeSidebar}
+            collapsed={sidebarCollapsed}
           />
         </Suspense>
       </div>
 
       {/* Footer */}
-      <div className="space-y-2 pt-4 border-t border-[#39322E]">
+      <div className={`space-y-2 pt-4 border-t border-[#39322E] ${sidebarCollapsed ? "lg:space-y-3" : ""}`}>
         <Link
           href="/settings"
           onClick={closeSidebar}
-          className="w-full bg-[#2C2622] hover:bg-[#342e2a] transition-colors rounded-[12px] p-3 flex items-center gap-3"
+          title={sidebarCollapsed ? "Account settings" : undefined}
+          aria-label={sidebarCollapsed ? "Account settings" : undefined}
+          className={`w-full bg-[#2C2622] hover:bg-[#342e2a] transition-colors rounded-[12px] flex items-center gap-3 ${
+            sidebarCollapsed ? "p-3 lg:justify-center lg:p-2" : "p-3"
+          }`}
         >
-          <div className="w-9 h-9 rounded-full bg-[#19A7D5] text-[#12191C] flex items-center justify-center font-bold text-[14px] shrink-0">
+          <div className={`w-9 h-9 rounded-full bg-[#19A7D5] text-[#12191C] flex items-center justify-center font-bold text-[14px] shrink-0 ${sidebarCollapsed ? "lg:hidden" : ""}`}>
             {initial}
           </div>
-          <div className="flex-1 min-w-0 leading-tight">
+          <div className={`flex-1 min-w-0 leading-tight ${sidebarCollapsed ? "lg:hidden" : ""}`}>
             <p className="text-[13px] font-semibold text-white truncate">{displayName}</p>
             <p className="text-[11px] text-[#AAA4A0] truncate">{sub}</p>
           </div>
-          <Settings className="w-4 h-4 text-[#AAA4A0] shrink-0" />
+          <Settings className={`w-4 h-4 text-[#AAA4A0] shrink-0 ${sidebarCollapsed ? "lg:hidden" : ""}`} />
+          {sidebarCollapsed && <Settings className="hidden lg:block w-4 h-4 text-[#AAA4A0] shrink-0" />}
         </Link>
 
         <form action="/auth/signout" method="post">
           <button
             type="submit"
+            title={sidebarCollapsed ? "Sign Out" : undefined}
+            aria-label="Sign Out"
             className="w-full h-[40px] rounded-[10px] bg-[#2C2622] hover:bg-[#3A3330] text-[#D1CECB] hover:text-white text-[13px] font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
           >
             <LogOut className="w-4 h-4 shrink-0" />
-            <span>Sign Out</span>
+            <span className={sidebarCollapsed ? "lg:hidden" : ""}>Sign Out</span>
           </button>
         </form>
       </div>
@@ -237,16 +292,25 @@ export function PortalShell({
   );
 
   return (
-    <div className="min-h-screen bg-[#F8F8F7] flex">
+      <div className="min-h-screen bg-[#F8F8F7] flex">
       {/* Mobile top bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 h-14 bg-[#1C1713] border-b border-[#39322E] flex items-center justify-between px-4">
-        <div className="flex items-center gap-2.5">
+        <button
+          type="button"
+          onClick={() => setSidebarOpen((open) => !open)}
+          aria-label={sidebarOpen ? "Close navigation" : "Open navigation"}
+          aria-expanded={sidebarOpen}
+          aria-controls="portal-sidebar"
+          className="flex items-center gap-2.5"
+        >
           <LogoMark size={30} />
           <span className="text-[14px] font-bold text-white">ICpEP.SE</span>
-        </div>
+        </button>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
           aria-label="Toggle navigation menu"
+          aria-expanded={sidebarOpen}
+          aria-controls="portal-sidebar"
           className="w-10 h-10 flex items-center justify-center text-white rounded-[8px] hover:bg-[#2C2622] transition-colors"
         >
           {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -254,22 +318,28 @@ export function PortalShell({
       </div>
 
       {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="lg:hidden fixed inset-0 z-40 bg-black/50"
-          onClick={closeSidebar}
-          aria-hidden="true"
-        />
-      )}
+      <div
+        className={`lg:hidden fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 ease-in-out motion-reduce:transition-none ${
+          sidebarOpen ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+        onClick={closeSidebar}
+        aria-hidden="true"
+      />
 
       {/* Sidebar */}
       <aside
-        className={`
-          fixed lg:sticky top-0 z-40 h-screen
-          w-[256px] shrink-0 bg-[#1C1713] border-r border-[#39322E]
+        id="portal-sidebar"
+        aria-label="Portal navigation"
+        onClick={(event) => {
+          if (window.innerWidth < 1024) return;
+          if ((event.target as HTMLElement).closest("a, button, input, select, textarea, [role='button']")) return;
+          setSidebarCollapsed((collapsed) => !collapsed);
+        }}
+        className={`fixed left-0 top-0 z-40 h-screen bg-[#1C1713] border-r border-[#39322E]
           flex flex-col justify-between p-5
           overflow-y-auto
-          transition-transform duration-200 ease-in-out
+          transition-[transform,width] duration-300 ease-in-out motion-reduce:transition-none
+          w-[min(256px,calc(100vw-3rem))] ${sidebarCollapsed ? "lg:w-[76px] lg:px-3" : "lg:w-[256px]"}
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0
         `}
@@ -278,7 +348,7 @@ export function PortalShell({
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 min-w-0 bg-[#F8F8F7] p-5 pt-[72px] sm:p-6 sm:pt-[72px] lg:p-10 overflow-x-hidden">
+      <main className={`flex-1 min-w-0 bg-[#F8F8F7] p-5 pt-[72px] sm:p-6 sm:pt-[72px] lg:p-10 overflow-x-hidden transition-[margin] duration-300 motion-reduce:transition-none ${sidebarCollapsed ? "lg:ml-[76px]" : "lg:ml-[256px]"}`}>
         {children}
       </main>
     </div>
