@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { LogoMark } from "./ui/Logo";
+import { createClient } from "@/lib/supabase/client";
 import {
   Home,
   Calendar,
@@ -18,6 +19,7 @@ import {
   Menu,
   X,
   LogOut,
+  SlidersHorizontal,
 } from "lucide-react";
 
 export type PortalRole = "member" | "non_member" | "officer" | "faculty" | "admin";
@@ -36,6 +38,8 @@ interface PortalShellProps {
   role?: PortalRole;
   userName?: string;
   userRoleLabel?: string;
+  unreadNotifications?: number;
+  unreadMessages?: number;
 }
 
 function getNavItems(role: PortalRole): NavItem[] {
@@ -43,30 +47,27 @@ function getNavItems(role: PortalRole): NavItem[] {
     return [
       { label: "Users Directory", href: "/admin",              icon: Users,    tab: "users"    },
       { label: "Site Settings",   href: "/admin?tab=settings", icon: Settings, tab: "settings" },
-      { label: "Notifications",   href: "/notifications",      icon: Bell                      },
       { label: "Profile",         href: "/profile",            icon: User                      },
     ];
   }
   if (role === "officer") {
     return [
-      { label: "Home",                  href: "/officer",               icon: Home     },
-      { label: "Analytics and Reports", href: "/officer?tab=analytics", icon: BarChart2},
-      { label: "Events",                href: "/events",                icon: Calendar },
-      { label: "Announcements",         href: "/news",                  icon: FileText },
-      { label: "Inbox",                 href: "/inbox",                 icon: Mail     },
-      { label: "Notifications",         href: "/notifications",         icon: Bell     },
-      { label: "Profile",               href: "/profile",               icon: User     },
+      { label: "Home",                  href: "/officer",                   icon: Home,              tab: "dashboard" },
+      { label: "Control Panel",         href: "/officer?tab=control-panel", icon: SlidersHorizontal, tab: "control-panel" },
+      { label: "Analytics and Reports", href: "/officer?tab=analytics",     icon: BarChart2,         tab: "analytics" },
+      { label: "Events",                href: "/events",                    icon: Calendar },
+      { label: "Announcements",         href: "/news",                      icon: FileText },
+      { label: "Profile",               href: "/profile",                   icon: User     },
     ];
   }
   if (role === "faculty") {
     return [
-      { label: "Home",                  href: "/faculty",               icon: Home     },
-      { label: "Analytics and Reports", href: "/faculty?tab=analytics", icon: BarChart2},
-      { label: "Events",                href: "/events",                icon: Calendar },
-      { label: "Announcements",         href: "/news",                  icon: FileText },
-      { label: "Inbox",                 href: "/inbox",                 icon: Mail     },
-      { label: "Notifications",         href: "/notifications",         icon: Bell     },
-      { label: "Profile",               href: "/profile",               icon: User     },
+      { label: "Home",                  href: "/faculty",                   icon: Home,              tab: "dashboard" },
+      { label: "Student Masterlist",    href: "/faculty?tab=operations",    icon: Users,             tab: "operations" },
+      { label: "Analytics and Reports", href: "/faculty?tab=analytics",     icon: BarChart2,         tab: "analytics" },
+      { label: "Events",                href: "/events",                    icon: Calendar },
+      { label: "Announcements",         href: "/news",                      icon: FileText },
+      { label: "Profile",               href: "/profile",                   icon: User     },
     ];
   }
   // non_member / member
@@ -75,8 +76,6 @@ function getNavItems(role: PortalRole): NavItem[] {
     { label: "Events",        href: "/events",        icon: Calendar },
     { label: "Announcements", href: "/news",          icon: FileText },
     { label: "Profile",       href: "/profile",       icon: User     },
-    { label: "Inbox",         href: "/inbox",         icon: Mail     },
-    { label: "Notifications", href: "/notifications", icon: Bell     },
   ];
 }
 
@@ -100,10 +99,10 @@ function SidebarNav({
     if (activeItemOverride) return activeItemOverride === item.label;
 
     if (item.tab !== undefined) {
-      // admin tab-based routing
+      // tab-based routing
       const basePath = item.href.split("?")[0];
       if (pathname !== basePath) return false;
-      if (item.tab === "users") return !currentTab;
+      if (item.tab === "users" || item.tab === "dashboard") return !currentTab || currentTab === item.tab;
       return currentTab === item.tab;
     }
 
@@ -156,10 +155,76 @@ export function PortalShell({
   role = "member",
   userName,
   userRoleLabel,
+  unreadNotifications: initialUnreadNotifications,
+  unreadMessages: initialUnreadMessages,
 }: PortalShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [unreadNotifications, setUnreadNotifications] = useState(initialUnreadNotifications ?? 0);
+  const [unreadMessages, setUnreadMessages] = useState(initialUnreadMessages ?? 0);
+  const pathname = usePathname();
   const navItems = getNavItems(role);
+
+  useEffect(() => {
+    if (initialUnreadNotifications !== undefined) {
+      setUnreadNotifications(initialUnreadNotifications);
+    }
+  }, [initialUnreadNotifications]);
+
+  useEffect(() => {
+    if (initialUnreadMessages !== undefined) {
+      setUnreadMessages(initialUnreadMessages);
+    }
+  }, [initialUnreadMessages]);
+
+  useEffect(() => {
+    let active = true;
+    const fetchCounts = async () => {
+      try {
+        const supabase = createClient();
+        const { data: authData } = await supabase.auth.getUser();
+        const user = authData?.user;
+        if (!user || !active) return;
+
+        const [{ count: notifCount }, { count: msgCount }] = await Promise.all([
+          supabase
+            .from("notifications")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", user.id)
+            .eq("is_read", false),
+          supabase
+            .from("message_recipients")
+            .select("message_id", { count: "exact", head: true })
+            .eq("recipient_id", user.id)
+            .eq("is_read", false)
+            .is("deleted_at", null),
+        ]);
+
+        if (active) {
+          if (notifCount !== null && notifCount !== undefined) {
+            setUnreadNotifications(notifCount);
+          }
+          if (msgCount !== null && msgCount !== undefined) {
+            setUnreadMessages(msgCount);
+          }
+        }
+      } catch {
+        // Fallback gracefully
+      }
+    };
+
+    fetchCounts();
+    return () => {
+      active = false;
+    };
+  }, [pathname]);
+
+  const isInboxActive =
+    activeItem === "Inbox" || pathname === "/inbox" || pathname.startsWith("/inbox/");
+  const isNotifsActive =
+    activeItem === "Notifications" ||
+    pathname === "/notifications" ||
+    pathname.startsWith("/notifications/");
 
   useEffect(() => {
     if (!sidebarOpen) return;
@@ -292,7 +357,7 @@ export function PortalShell({
   );
 
   return (
-      <div className="min-h-screen bg-[#F8F8F7] flex">
+    <div className="min-h-screen bg-[#F8F8F7] flex">
       {/* Mobile top bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 h-14 bg-[#1C1713] border-b border-[#39322E] flex items-center justify-between px-4">
         <button
@@ -306,15 +371,55 @@ export function PortalShell({
           <LogoMark size={30} />
           <span className="text-[14px] font-bold text-white">ICpEP.SE</span>
         </button>
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          aria-label="Toggle navigation menu"
-          aria-expanded={sidebarOpen}
-          aria-controls="portal-sidebar"
-          className="w-10 h-10 flex items-center justify-center text-white rounded-[8px] hover:bg-[#2C2622] transition-colors"
-        >
-          {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+
+        {/* Mobile Top-Right Actions: Inbox & Notifications + Menu */}
+        <div className="flex items-center gap-1 sm:gap-1.5">
+          <Link
+            href="/inbox"
+            title="Inbox"
+            aria-label="Inbox"
+            className={`relative p-2 rounded-lg transition-colors ${
+              isInboxActive
+                ? "text-[#19A7D5] bg-white/10"
+                : "text-[#D1CECB] hover:text-white hover:bg-[#2C2622]"
+            }`}
+          >
+            <Mail className="w-5 h-5" />
+            {unreadMessages > 0 && (
+              <span className="absolute top-1 right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#19A7D5] px-1 text-[10px] font-bold text-[#1C1713]">
+                {unreadMessages > 99 ? "99+" : unreadMessages}
+              </span>
+            )}
+          </Link>
+
+          <Link
+            href="/notifications"
+            title="Notifications"
+            aria-label="Notifications"
+            className={`relative p-2 rounded-lg transition-colors ${
+              isNotifsActive
+                ? "text-[#19A7D5] bg-white/10"
+                : "text-[#D1CECB] hover:text-white hover:bg-[#2C2622]"
+            }`}
+          >
+            <Bell className="w-5 h-5" />
+            {unreadNotifications > 0 && (
+              <span className="absolute top-1 right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#bf2626] px-1 text-[10px] font-bold text-white">
+                {unreadNotifications > 99 ? "99+" : unreadNotifications}
+              </span>
+            )}
+          </Link>
+
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label="Toggle navigation menu"
+            aria-expanded={sidebarOpen}
+            aria-controls="portal-sidebar"
+            className="w-10 h-10 flex items-center justify-center text-white rounded-[8px] hover:bg-[#2C2622] transition-colors"
+          >
+            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile overlay */}
@@ -347,10 +452,63 @@ export function PortalShell({
         {sidebarContent}
       </aside>
 
-      {/* Main content */}
-      <main className={`flex-1 min-w-0 bg-[#F8F8F7] p-5 pt-[72px] sm:p-6 sm:pt-[72px] lg:p-10 overflow-x-hidden transition-[margin] duration-300 motion-reduce:transition-none ${sidebarCollapsed ? "lg:ml-[76px]" : "lg:ml-[256px]"}`}>
-        {children}
-      </main>
+      {/* Main content area with dedicated top bar */}
+      <div
+        className={`flex-1 min-w-0 flex flex-col min-h-screen transition-[margin] duration-300 motion-reduce:transition-none ${
+          sidebarCollapsed ? "lg:ml-[76px]" : "lg:ml-[256px]"
+        }`}
+      >
+        {/* Desktop Sticky Top Bar: Compact quick-actions header with tight, natural spacing */}
+        <header className="hidden lg:flex sticky top-0 z-30 h-12 items-center justify-end px-5 sm:px-6 lg:px-10 bg-[#F8F8F7]/90 backdrop-blur-md">
+          <aside
+            aria-label="Quick actions"
+            className="flex items-center gap-1 bg-white/95 backdrop-blur-md p-1 rounded-full border border-[#DEDBD8] shadow-xs hover:shadow-sm transition-shadow"
+          >
+            <Link
+              href="/inbox"
+              title="Inbox"
+              aria-label="Inbox"
+              className={`relative p-1.5 rounded-full transition-colors ${
+                isInboxActive
+                  ? "bg-[#E3F6FC] text-[#0087B5]"
+                  : "text-[#544E49] hover:text-[#0087B5] hover:bg-[#F2EFE9]"
+              }`}
+            >
+              <Mail className="w-5 h-5" />
+              {unreadMessages > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#19A7D5] px-1 text-[10px] font-bold text-[#1C1713] ring-2 ring-white">
+                  {unreadMessages > 99 ? "99+" : unreadMessages}
+                </span>
+              )}
+            </Link>
+
+            <div className="w-[1px] h-4 bg-[#E5E0DC]" />
+
+            <Link
+              href="/notifications"
+              title="Notifications"
+              aria-label="Notifications"
+              className={`relative p-1.5 rounded-full transition-colors ${
+                isNotifsActive
+                  ? "bg-[#E3F6FC] text-[#0087B5]"
+                  : "text-[#544E49] hover:text-[#0087B5] hover:bg-[#F2EFE9]"
+              }`}
+            >
+              <Bell className="w-5 h-5" />
+              {unreadNotifications > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#bf2626] px-1 text-[10px] font-bold text-white ring-2 ring-white">
+                  {unreadNotifications > 99 ? "99+" : unreadNotifications}
+                </span>
+              )}
+            </Link>
+          </aside>
+        </header>
+
+        {/* Main page content */}
+        <main className="flex-1 min-w-0 bg-[#F8F8F7] p-5 pt-[72px] sm:p-6 sm:pt-[72px] lg:p-10 lg:pt-3 overflow-x-hidden">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

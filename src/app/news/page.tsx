@@ -98,7 +98,7 @@ export default async function NewsPage({
     return true;
   });
 
-  const isStaff = role === "officer" || role === "admin";
+  const isStaff = role === "officer" || role === "faculty" || role === "admin";
   const fullName = profile ? `${profile.first_name} ${profile.last_name}` : "User";
   const roleLabel = role ? ROLE_LABELS[role] : "Student";
 

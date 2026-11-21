@@ -6,7 +6,11 @@ export const metadata: Metadata = {
   description:
     "Official student portal for the Institute of Computer Engineers of the Philippines - CIT-U Student Edition.",
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/icon.png" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/apple-icon.png",
   },
 };
 

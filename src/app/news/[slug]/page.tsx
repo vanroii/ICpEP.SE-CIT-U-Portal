@@ -86,6 +86,17 @@ export default async function NewsDetailPage({
             </div>
           </div>
 
+          {post.cover_image_url && (
+            <div className="rounded-xl overflow-hidden border border-[#DEDBD8] max-h-96 bg-[#FAF9F8]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={post.cover_image_url}
+                alt={post.title}
+                className="w-full h-full object-cover max-h-96"
+              />
+            </div>
+          )}
+
           <div className="text-sm text-[#514B47] leading-relaxed whitespace-pre-line space-y-4 font-normal">
             {post.body}
           </div>

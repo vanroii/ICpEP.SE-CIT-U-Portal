@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { DASHBOARD_BY_ROLE, ROLE_LABELS, type RoleCode } from "@/lib/roles";
 import { Avatar } from "./ui/Avatar";
 import { Badge } from "./ui/Badge";
+import { LogoMark } from "./ui/Logo";
 import { Bell, Mail, Shield, User, LogOut } from "lucide-react";
 
 export default async function NavBar() {
@@ -62,9 +63,7 @@ export default async function NavBar() {
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-3.5">
         {/* Brand Logo & Wordmark */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#1ca7e0] text-[#1b1613] font-black text-sm shadow-sm group-hover:scale-105 transition-transform">
-            <span className="tracking-tighter font-mono">SE</span>
-          </div>
+          <LogoMark size={36} className="group-hover:scale-105 transition-transform" />
           <div className="flex flex-col">
             <span className="text-base font-bold tracking-tight text-white group-hover:text-[#1ca7e0] transition-colors">
               ICpEP.SE

@@ -127,6 +127,7 @@ export async function createPostAction(formData: FormData) {
     const visibility = String(formData.get("visibility") || "public");
     const status = String(formData.get("status") || "published");
     const isPinned = formData.get("is_pinned") === "on";
+    const coverImageUrl = String(formData.get("cover_image_url") || "").trim() || null;
 
     if (!title || !body) {
       return { error: "Title and content body are required." };
@@ -138,6 +139,7 @@ export async function createPostAction(formData: FormData) {
       post_type: postType,
       summary,
       body,
+      cover_image_url: coverImageUrl,
       visibility,
       status,
       is_pinned: isPinned,
@@ -148,6 +150,8 @@ export async function createPostAction(formData: FormData) {
 
     revalidatePath("/news");
     revalidatePath("/officer");
+    revalidatePath("/faculty");
+    revalidatePath("/student");
     revalidatePath("/");
     return { success: true };
   } catch (err: any) {

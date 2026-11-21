@@ -177,7 +177,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-[13px] font-semibold text-[#3D3733]">Year & Section *</label>
+                <label className="block text-[13px] font-semibold text-[#3D3733]">Course & Year *</label>
                 <div className="relative">
                   <select
                     name="year_and_section"
