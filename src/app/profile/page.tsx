@@ -136,8 +136,8 @@ export default async function ProfilePage() {
           {/* Profile Identity Bar */}
           <div className="px-6 sm:px-8 py-6 relative">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
-              <div className="sm:-mt-16 flex flex-col sm:flex-row items-center sm:items-start gap-5">
-                <div className="w-[100px] h-[100px] sm:w-[120px] sm:h-[120px] rounded-full bg-[#19A7D5] border-[5px] border-white text-[#12191C] flex items-center justify-center font-bold text-[42px] sm:text-[50px] shadow-sm shrink-0 select-none">
+              <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5">
+                <div className="sm:-mt-16 w-[100px] h-[100px] sm:w-[120px] sm:h-[120px] rounded-full bg-[#19A7D5] border-[5px] border-white text-[#12191C] flex items-center justify-center font-bold text-[42px] sm:text-[50px] shadow-sm shrink-0 select-none">
                   {avatarLetter}
                 </div>
 

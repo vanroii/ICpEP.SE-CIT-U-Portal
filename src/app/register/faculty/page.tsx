@@ -142,27 +142,15 @@ export default function FacultyRegisterPage() {
             </div>
 
             {/* Faculty-specific */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label className="block text-[13px] font-semibold text-[#3D3733]">
-                  Employee ID <span className="font-normal text-[#928C88]">(opt.)</span>
-                </label>
-                <input
-                  name="employee_id"
-                  placeholder="e.g. EMP-2026-001"
-                  className="w-full h-[46px] px-4 rounded-[10px] bg-white border border-[#C9C5C2] text-[14px] text-[#1C1713] placeholder-[#928C88] outline-none focus:border-[#19A7D5] focus:ring-2 focus:ring-[#19A7D5]/20"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="block text-[13px] font-semibold text-[#3D3733]">
-                  Department <span className="font-normal text-[#928C88]">(opt.)</span>
-                </label>
-                <input
-                  name="department"
-                  placeholder="e.g. CEA"
-                  className="w-full h-[46px] px-4 rounded-[10px] bg-white border border-[#C9C5C2] text-[14px] text-[#1C1713] placeholder-[#928C88] outline-none focus:border-[#19A7D5] focus:ring-2 focus:ring-[#19A7D5]/20"
-                />
-              </div>
+            <div className="space-y-1.5">
+              <label className="block text-[13px] font-semibold text-[#3D3733]">
+                Employee ID <span className="font-normal text-[#928C88]">(opt.)</span>
+              </label>
+              <input
+                name="employee_id"
+                placeholder="e.g. EMP-2026-001"
+                className="w-full h-[46px] px-4 rounded-[10px] bg-white border border-[#C9C5C2] text-[14px] text-[#1C1713] placeholder-[#928C88] outline-none focus:border-[#19A7D5] focus:ring-2 focus:ring-[#19A7D5]/20"
+              />
             </div>
 
             {/* Email */}
