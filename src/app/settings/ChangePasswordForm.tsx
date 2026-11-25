@@ -25,7 +25,7 @@ export function ChangePasswordForm() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-[#3D3733]">
+          <label className="block text-xs font-semibold text-text-700">
             New Password (Min. 8 characters)
           </label>
           <input
@@ -34,12 +34,12 @@ export function ChangePasswordForm() {
             required
             minLength={8}
             placeholder="••••••••"
-            className="w-full h-[42px] px-3.5 rounded-[10px] bg-white border border-[#C9C5C2] text-xs text-[#1C1713] outline-none focus:border-[#19A7D5]"
+            className="w-full h-10.5 px-3.5 rounded-[10px] bg-white border border-border-input text-xs text-ink-900 outline-none focus:border-cyan-500"
           />
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-[#3D3733]">
+          <label className="block text-xs font-semibold text-text-700">
             Confirm New Password
           </label>
           <input
@@ -48,7 +48,7 @@ export function ChangePasswordForm() {
             required
             minLength={8}
             placeholder="••••••••"
-            className="w-full h-[42px] px-3.5 rounded-[10px] bg-white border border-[#C9C5C2] text-xs text-[#1C1713] outline-none focus:border-[#19A7D5]"
+            className="w-full h-10.5 px-3.5 rounded-[10px] bg-white border border-border-input text-xs text-ink-900 outline-none focus:border-cyan-500"
           />
         </div>
       </div>
@@ -56,7 +56,7 @@ export function ChangePasswordForm() {
       <button
         type="submit"
         disabled={pending}
-        className="h-[38px] px-5 rounded-[8px] bg-[#19A7D5] hover:bg-[#1695bf] text-[#12191C] font-semibold text-xs flex items-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
+        className="h-[38px] px-5 rounded-[8px] bg-cyan-500 hover:bg-[#1695bf] text-on-brand font-semibold text-xs flex items-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
       >
         <Lock className="w-3.5 h-3.5" />
         <span>{pending ? "Updating..." : "Update Password"}</span>

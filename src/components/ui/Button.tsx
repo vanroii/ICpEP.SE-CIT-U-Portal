@@ -20,29 +20,29 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center font-semibold rounded-[8px] transition-colors focus:outline-none focus:ring-2 focus:ring-[#19A7D5] focus:ring-offset-1 disabled:opacity-50 disabled:pointer-events-none cursor-pointer whitespace-nowrap";
+      "inline-flex items-center justify-center font-semibold rounded-[8px] transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1 disabled:opacity-50 disabled:pointer-events-none cursor-pointer whitespace-nowrap";
 
     const sizeStyles = {
-      sm: "px-[14px] py-[8px] text-[13px] h-[34px]",
+      sm: "px-3.5 py-[8px] text-[13px] h-[34px]",
       md: "px-[22px] py-[13px] text-[14px] leading-tight h-[43px]",
       lg: "px-[24px] py-[14px] text-[15px] h-[48px]",
     };
 
     const variantStyles = {
       primary:
-        "bg-[#19A7D5] text-[#12191C] hover:bg-[#1695bf] active:bg-[#1383a8] font-semibold",
+        "bg-cyan-500 text-on-brand hover:bg-[#1695bf] active:bg-[#1383a8] font-semibold",
       accent:
-        "bg-[#19A7D5] text-[#12191C] hover:bg-[#1695bf] active:bg-[#1383a8] font-semibold",
+        "bg-cyan-500 text-on-brand hover:bg-[#1695bf] active:bg-[#1383a8] font-semibold",
       secondary:
-        "bg-transparent border-[1.5px] border-[#0087B5] text-[#0087B5] hover:bg-[#E3F6FC] font-semibold",
+        "bg-transparent border-[1.5px] border-cyan-600 text-cyan-600 hover:bg-cyan-50 font-semibold",
       "on-dark":
         "bg-transparent border-[1.5px] border-[#FFFFFF] text-[#FFFFFF] hover:bg-white/10 font-semibold",
       outline:
-        "bg-white border border-[#C9C5C2] text-[#0087B5] hover:bg-[#FAF9F8] font-semibold",
+        "bg-white border border-border-input text-cyan-600 hover:bg-surface-50 font-semibold",
       ghost:
-        "bg-transparent text-[#0087B5] hover:bg-[#E3F6FC] font-semibold",
+        "bg-transparent text-cyan-600 hover:bg-cyan-50 font-semibold",
       danger:
-        "bg-transparent border border-[#FCA5A5] text-[#B91C1C] hover:bg-[#FEE2E2] font-semibold",
+        "bg-transparent border border-status-danger-border text-status-danger hover:bg-status-danger-bg font-semibold",
     };
 
     return (

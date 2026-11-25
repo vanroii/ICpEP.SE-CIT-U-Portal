@@ -32,7 +32,7 @@ export function TableRow({
   return (
     <div
       onClick={onClick}
-      className={`flex items-center justify-between gap-4 border-b border-[#EEECEA] bg-white px-5 py-3.5 transition-colors hover:bg-[#FAF9F8] ${
+      className={`flex items-center justify-between gap-4 border-b border-divider bg-white px-5 py-3.5 transition-colors hover:bg-surface-50 ${
         onClick ? "cursor-pointer" : ""
       } ${className}`}
     >
@@ -40,9 +40,9 @@ export function TableRow({
       <div className="flex items-center gap-3.5 min-w-0 flex-1">
         <Avatar name={name} size="sm" />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[14px] font-semibold text-[#1C1713]">{name}</p>
+          <p className="truncate text-[14px] font-semibold text-ink-900">{name}</p>
           {(email || subtitle) && (
-            <p className="truncate text-[12px] text-[#817B77]">{email || subtitle}</p>
+            <p className="truncate text-[12px] text-text-500">{email || subtitle}</p>
           )}
         </div>
       </div>

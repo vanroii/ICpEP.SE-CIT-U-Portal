@@ -129,7 +129,7 @@ export default async function StudentHomePage() {
                 {isMember ? "Verified Member" : "Non-Member Student"}
               </Badge>
             </div>
-            <p className="text-xs sm:text-sm text-[#D1CECB]">
+            <p className="text-xs sm:text-sm text-text-dark">
               {profile?.program || "BS Computer Engineering"} {profile?.year_level ? `· Year ${profile.year_level}` : ""} · Student ID: {profile?.student_number || "—"}
             </p>
           </div>
@@ -143,7 +143,7 @@ export default async function StudentHomePage() {
             </Link>
             <Link
               href="/events"
-              className="h-[38px] px-4 rounded-[8px] bg-[#19A7D5] hover:bg-[#1695bf] text-[#12191C] text-xs font-bold flex items-center transition-colors"
+              className="h-[38px] px-4 rounded-[8px] bg-cyan-500 hover:bg-[#1695bf] text-on-brand text-xs font-bold flex items-center transition-colors"
             >
               Browse Events
             </Link>
@@ -152,15 +152,15 @@ export default async function StudentHomePage() {
 
         {/* Membership Banner (if non-member) */}
         {!isMember && (
-          <div className="bg-[#E3F6FC] border border-[#BCE9F7] rounded-[16px] p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="bg-cyan-50 border border-[#BCE9F7] rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
-              <h3 className="font-bold text-[16px] text-[#0087B5] flex items-center gap-2">
+              <h3 className="font-bold text-[16px] text-cyan-600 flex items-center gap-2">
                 <Award className="w-5 h-5 shrink-0" />
                 {pendingApplication
                   ? "Membership Application Under Review"
                   : "Become an Official ICpEP.SE Member for AY 2026–2027"}
               </h3>
-              <p className="text-xs text-[#0087B5]/90 max-w-2xl leading-relaxed">
+              <p className="text-xs text-cyan-600/90 max-w-2xl leading-relaxed">
                 {pendingApplication
                   ? "Your membership application has been submitted and is currently being verified by chapter officers."
                   : "Unlock members-only engineering bootcamps, hardware loan privileges, verified digital IDs, and national convention endorsements."}
@@ -171,7 +171,7 @@ export default async function StudentHomePage() {
               {!pendingApplication ? (
                 <ApplyMembershipModal />
               ) : (
-                <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-[#FEF3C7] text-[#B45309] border border-[#FCD34D]">
+                <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-status-post-officer-bg text-status-post-officer border border-[#FCD34D]">
                   Status: Pending Approval
                 </span>
               )}
@@ -182,12 +182,16 @@ export default async function StudentHomePage() {
         {/* Community Feed */}
         <div className="space-y-4">
           <div className="flex items-center justify-between pb-1">
-            <h2 className="text-[18px] font-bold text-[#1C1713] flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#0087B5]" />
+            <h2 className="text-[18px] font-bold text-ink-900 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-cyan-600" />
               Chapter Community Feed
             </h2>
-            <Link href="/news" className="text-[13px] font-semibold text-[#0087B5] hover:underline">
-              View all announcements →
+            <Link
+              href="/news"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-border-default text-xs font-semibold text-ink-900 hover:border-cyan-500 hover:bg-cyan-50/40 hover:text-cyan-600 shadow-2xs transition-all whitespace-nowrap"
+            >
+              View all announcements
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 

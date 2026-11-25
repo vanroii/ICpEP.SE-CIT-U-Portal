@@ -51,14 +51,14 @@ export function Logo({
       <div className="flex flex-col leading-tight">
         <span
           className={`text-[17px] font-bold tracking-[-0.2px] ${
-            isDark ? "text-white" : "text-[#1C1713]"
+            isDark ? "text-white" : "text-ink-900"
           }`}
         >
           ICpEP.SE
         </span>
         <span
           className={`text-[12px] font-medium ${
-            isDark ? "text-[#AAA4A0]" : "text-[#817B77]"
+            isDark ? "text-text-mute" : "text-text-500"
           }`}
         >
           {subtitle}

@@ -118,10 +118,10 @@ export default async function EventsPage({
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1.5">
-          <h1 className="text-[30px] leading-[38px] font-bold text-[#1C1713] tracking-[-0.5px]">
+          <h1 className="text-[30px] leading-[38px] font-bold text-ink-900 tracking-[-0.5px]">
             Events Calendar
           </h1>
-          <p className="text-[15px] text-[#817B77]">
+          <p className="text-[15px] text-text-500">
             Browse upcoming ICpEP.SE chapter events, bootcamps, and assemblies.
           </p>
         </div>
@@ -130,12 +130,12 @@ export default async function EventsPage({
           {/* Search Form */}
           <form method="get" className="relative w-[260px]">
             <input type="hidden" name="filter" value={filter} />
-            <Search className="w-4 h-4 text-[#928C88] absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-text-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               name="q"
               defaultValue={search}
               placeholder="Search events..."
-              className="w-full h-[42px] pl-9 pr-3 bg-white border border-[#C9C5C2] rounded-[10px] text-[14px] text-[#1C1713] placeholder-[#928C88] outline-none focus:border-[#19A7D5]"
+              className="w-full h-10.5 pl-9 pr-3 bg-white border border-border-input rounded-[10px] text-[14px] text-ink-900 placeholder-text-400 outline-none focus:border-cyan-500"
             />
           </form>
 
@@ -147,10 +147,10 @@ export default async function EventsPage({
       <div className="flex items-center gap-2.5 flex-wrap">
         <Link
           href={`/events${search ? `?q=${encodeURIComponent(search)}` : ""}`}
-          className={`h-[32px] px-[14px] rounded-full text-[13px] font-semibold transition-colors flex items-center ${
+          className={`h-8 px-3.5 rounded-full text-[13px] font-semibold transition-colors flex items-center ${
             filter === "all"
-              ? "bg-[#19A7D5] text-[#12191C]"
-              : "bg-white border border-[#DEDBD8] text-[#817B77] hover:text-[#1C1713]"
+              ? "bg-cyan-500 text-on-brand"
+              : "bg-white border border-border-default text-text-500 hover:text-ink-900"
           }`}
         >
           All Upcoming ({sourceEvents.length})
@@ -158,10 +158,10 @@ export default async function EventsPage({
         {user && (
           <Link
             href={`/events?filter=going${search ? `&q=${encodeURIComponent(search)}` : ""}`}
-            className={`h-[32px] px-[14px] rounded-full text-[13px] font-semibold transition-colors flex items-center ${
+            className={`h-8 px-3.5 rounded-full text-[13px] font-semibold transition-colors flex items-center ${
               filter === "going"
-                ? "bg-[#19A7D5] text-[#12191C]"
-                : "bg-white border border-[#DEDBD8] text-[#817B77] hover:text-[#1C1713]"
+                ? "bg-cyan-500 text-on-brand"
+                : "bg-white border border-border-default text-text-500 hover:text-ink-900"
             }`}
           >
             My RSVPs ({registeredEventIds.size})
@@ -169,10 +169,10 @@ export default async function EventsPage({
         )}
         <Link
           href={`/events?filter=members_only${search ? `&q=${encodeURIComponent(search)}` : ""}`}
-          className={`h-[32px] px-[14px] rounded-full text-[13px] font-semibold transition-colors flex items-center ${
+          className={`h-8 px-3.5 rounded-full text-[13px] font-semibold transition-colors flex items-center ${
             filter === "members_only"
-              ? "bg-[#19A7D5] text-[#12191C]"
-              : "bg-white border border-[#DEDBD8] text-[#817B77] hover:text-[#1C1713]"
+              ? "bg-cyan-500 text-on-brand"
+              : "bg-white border border-border-default text-text-500 hover:text-ink-900"
           }`}
         >
           Members Only ★
@@ -190,7 +190,7 @@ export default async function EventsPage({
             return (
               <div
                 key={evt.slug || evt.id}
-                className="bg-white border border-[#DEDBD8] rounded-[16px] overflow-hidden flex flex-col justify-between hover:border-[#19A7D5] transition-colors shadow-xs"
+                className="bg-white border border-border-default rounded-2xl overflow-hidden flex flex-col justify-between hover:border-cyan-500 transition-colors shadow-xs"
               >
                 <div>
                   {/* Photo / Header Placeholder */}
@@ -206,12 +206,12 @@ export default async function EventsPage({
 
                     <div className="flex flex-col items-end gap-1">
                       {isGoing && (
-                        <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#DCFCE7] text-[#15803D]">
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-status-success-bg text-status-success">
                           Registered ✓
                         </span>
                       )}
                       {isMembersOnly && (
-                        <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#FEF3C7] text-[#B45309]">
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-status-post-officer-bg text-status-post-officer">
                           Members Only
                         </span>
                       )}
@@ -219,32 +219,32 @@ export default async function EventsPage({
                   </div>
 
                   <div className="p-5 space-y-3">
-                    <h3 className="text-[17px] font-bold text-[#1C1713] leading-snug">
-                      <Link href={`/events/${evt.slug}`} className="hover:text-[#0087B5]">
+                    <h3 className="text-[17px] font-bold text-ink-900 leading-snug">
+                      <Link href={`/events/${evt.slug}`} className="hover:text-cyan-600">
                         {evt.title}
                       </Link>
                     </h3>
 
                     {evt.description && (
-                      <p className="text-[13px] text-[#514B47] line-clamp-2 leading-relaxed">
+                      <p className="text-[13px] text-text-600 line-clamp-2 leading-relaxed">
                         {evt.description}
                       </p>
                     )}
 
-                    <div className="space-y-1.5 text-[12px] text-[#817B77] pt-1">
+                    <div className="space-y-1.5 text-[12px] text-text-500 pt-1">
                       <div className="flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5 text-[#0087B5]" />
+                        <Clock className="w-3.5 h-3.5 text-cyan-600" />
                         <span>
                           {startDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-[#0087B5]" />
+                        <MapPin className="w-3.5 h-3.5 text-cyan-600" />
                         <span className="truncate">{evt.venue || "CIT-U Campus"}</span>
                       </div>
                       {evt.capacity && (
                         <div className="flex items-center gap-1.5">
-                          <Users className="w-3.5 h-3.5 text-[#0087B5]" />
+                          <Users className="w-3.5 h-3.5 text-cyan-600" />
                           <span>
                             {evt.participant_count || 0} / {evt.capacity} registered
                           </span>
@@ -257,7 +257,7 @@ export default async function EventsPage({
                 <div className="p-5 pt-0">
                   <Link
                     href={`/events/${evt.slug}`}
-                    className="w-full h-[38px] rounded-[8px] bg-[#E3F6FC] hover:bg-[#19A7D5] text-[#0087B5] hover:text-[#12191C] font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                    className="w-full h-[38px] rounded-[8px] bg-cyan-50 hover:bg-cyan-500 text-cyan-600 hover:text-on-brand font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors"
                   >
                     <span>{isGoing ? "Manage Registration" : "View & Register"}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -268,10 +268,10 @@ export default async function EventsPage({
           })}
         </div>
       ) : (
-        <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-12 text-center space-y-3">
-          <Calendar className="w-8 h-8 text-[#817B77] mx-auto opacity-50" />
-          <h3 className="text-[17px] font-bold text-[#1C1713]">No events found</h3>
-          <p className="text-[14px] text-[#817B77] max-w-sm mx-auto">
+        <div className="bg-white border border-border-default rounded-2xl p-12 text-center space-y-3">
+          <Calendar className="w-8 h-8 text-text-500 mx-auto opacity-50" />
+          <h3 className="text-[17px] font-bold text-ink-900">No events found</h3>
+          <p className="text-[14px] text-text-500 max-w-sm mx-auto">
             Try adjusting your search query or switching filters.
           </p>
         </div>
@@ -293,7 +293,7 @@ export default async function EventsPage({
   }
 
   return (
-    <div className="w-full bg-[#F8F8F7] min-h-screen flex flex-col justify-between">
+    <div className="w-full bg-surface-page min-h-screen flex flex-col justify-between">
       <PublicNavbar />
       <main className="max-w-[1440px] mx-auto px-5 sm:px-12 lg:px-[120px] py-12 w-full">
         {content}

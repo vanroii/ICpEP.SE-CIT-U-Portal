@@ -47,7 +47,7 @@ export function ApplyMembershipModal() {
           <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-[#f0eeeb]">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-[#e3f6fc] text-[#0a7db0]">
+                <div className="p-2 rounded-xl bg-cyan-50 text-[#0a7db0]">
                   <Award className="w-5 h-5" />
                 </div>
                 <h3 className="font-bold text-base text-[#1b1613]">

@@ -6,7 +6,9 @@ import { createClient } from "@/lib/supabase/server";
 export async function markNotificationReadAction(notificationId: number) {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return { success: false };
 
     await supabase
@@ -22,10 +24,34 @@ export async function markNotificationReadAction(notificationId: number) {
   }
 }
 
+export async function markNotificationGroupReadAction(notificationIds: number[]) {
+  try {
+    if (!notificationIds.length) return { success: true };
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false };
+
+    await supabase
+      .from("notifications")
+      .update({ is_read: true, read_at: new Date().toISOString() })
+      .in("id", notificationIds)
+      .eq("user_id", user.id);
+
+    revalidatePath("/notifications");
+    return { success: true };
+  } catch {
+    return { success: false };
+  }
+}
+
 export async function markAllNotificationsReadAction() {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return { success: false };
 
     await supabase

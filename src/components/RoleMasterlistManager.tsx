@@ -213,14 +213,14 @@ export function RoleMasterlistManager({ mode }: { mode: ManagerMode }) {
 
   return (
     <section className="grid gap-5 lg:grid-cols-2">
-      <div className="space-y-4 rounded-[16px] border border-[#DEDBD8] bg-white p-6 shadow-xs">
+      <div className="space-y-4 rounded-2xl border border-border-default bg-white p-6 shadow-xs">
         <div className="flex items-start gap-3">
-          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#0087B5]" />
+          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-cyan-600" />
           <div>
-            <h2 className="font-bold text-[#1C1713]">
+            <h2 className="font-bold text-ink-900">
               Assign a {isStudentList ? "Student as Officer" : "Student as Member"}
             </h2>
-            <p className="mt-1 text-xs text-[#817B77]">
+            <p className="mt-1 text-xs text-text-500">
               {isStudentList
                 ? "Promote an existing student account using their student number."
                 : "Assign an active membership to an existing student account."}
@@ -235,7 +235,7 @@ export function RoleMasterlistManager({ mode }: { mode: ManagerMode }) {
             value={studentNumber}
             onChange={(event) => setStudentNumber(event.target.value)}
             placeholder="Student number"
-            className="min-w-0 rounded-lg border border-[#DEDBD8] px-3 py-2 text-sm text-[#1C1713] outline-none focus:border-[#0087B5]"
+            className="min-w-0 rounded-lg border border-border-default px-3 py-2 text-sm text-ink-900 outline-none focus:border-cyan-600"
           />
           {!isStudentList && (
             <>
@@ -246,7 +246,7 @@ export function RoleMasterlistManager({ mode }: { mode: ManagerMode }) {
                 value={membershipNumber}
                 onChange={(event) => setMembershipNumber(event.target.value)}
                 placeholder="Membership number"
-                className="min-w-0 rounded-lg border border-[#DEDBD8] px-3 py-2 text-sm text-[#1C1713] outline-none focus:border-[#0087B5]"
+                className="min-w-0 rounded-lg border border-border-default px-3 py-2 text-sm text-ink-900 outline-none focus:border-cyan-600"
               />
             </>
           )}
@@ -259,14 +259,14 @@ export function RoleMasterlistManager({ mode }: { mode: ManagerMode }) {
         </form>
       </div>
 
-      <div className="space-y-4 rounded-[16px] border border-[#DEDBD8] bg-white p-6 shadow-xs">
+      <div className="space-y-4 rounded-2xl border border-border-default bg-white p-6 shadow-xs">
         <div className="flex items-start gap-3">
-          <FileUp className="mt-0.5 h-5 w-5 shrink-0 text-[#0087B5]" />
+          <FileUp className="mt-0.5 h-5 w-5 shrink-0 text-cyan-600" />
           <div>
-            <h2 className="font-bold text-[#1C1713]">
+            <h2 className="font-bold text-ink-900">
               Upload {isStudentList ? "Student" : "Member"} Masterlist
             </h2>
-            <p className="mt-1 text-xs text-[#817B77]">
+            <p className="mt-1 text-xs text-text-500">
               {isStudentList
                 ? "Required columns: student_number, first_name, last_name. Optional: middle_name, email, program, year_level."
                 : "Required columns: student_number, membership_no. Every student must already have an account."}
@@ -278,11 +278,11 @@ export function RoleMasterlistManager({ mode }: { mode: ManagerMode }) {
           accept=".csv,text/csv"
           onChange={handleFile}
           aria-label={`Upload ${isStudentList ? "student" : "member"} masterlist CSV`}
-          className="block w-full text-sm text-[#514B47] file:mr-3 file:rounded-lg file:border-0 file:bg-[#E3F6FC] file:px-3 file:py-2 file:text-xs file:font-semibold file:text-[#0087B5]"
+          className="block w-full text-sm text-text-600 file:mr-3 file:rounded-lg file:border-0 file:bg-cyan-50 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-cyan-600"
         />
         {fileRows && (
           <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-            <p className="text-[#514B47]">{fileName} · {fileRows.length} rows ready</p>
+            <p className="text-text-600">{fileName} · {fileRows.length} rows ready</p>
             <Button type="button" onClick={handleImport} isLoading={busy} size="sm">
               Import CSV
             </Button>

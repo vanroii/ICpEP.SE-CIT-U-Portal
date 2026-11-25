@@ -4,10 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 import { PortalShell } from "@/components/PortalShell";
 import { ComposeMessageModal } from "./ComposeMessageModal";
 import { MessageThreadView } from "./MessageThreadView";
-import { markMessageReadAction } from "./actions";
 import { ROLE_LABELS, type RoleCode } from "@/lib/roles";
-import { Search, Mail, Send, Inbox as InboxIcon } from "lucide-react";
+import { Mail, Inbox as InboxIcon } from "lucide-react";
 import Link from "next/link";
+import { stripRePrefix, formatFormalName } from "./utils";
 
 export const dynamic = "force-dynamic";
 
@@ -17,13 +17,15 @@ export default async function InboxPage({
   searchParams?: Promise<{ tab?: string; thread?: string }>;
 }) {
   const resolvedParams = searchParams ? await searchParams : {};
-  const activeTab = resolvedParams?.tab || "all";
-  const selectedThreadId = resolvedParams?.thread ? Number(resolvedParams.thread) : null;
+  const activeTab = resolvedParams?.tab === "unread" ? "unread" : "all";
+  const selectedThreadId = resolvedParams?.thread
+    ? Number(resolvedParams.thread)
+    : null;
 
   let user: any = null;
   let role: RoleCode = "non_member";
   let profile: any = null;
-  let inboxList: any[] = [];
+  let threads: any[] = [];
   let directory: any[] = [];
 
   try {
@@ -38,75 +40,156 @@ export default async function InboxPage({
     const [{ data: r }, { data: p }, { data: dirData }] = await Promise.all([
       supabase.rpc("auth_role"),
       supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
-      supabase.from("user_directory").select("*").limit(50),
+      supabase.from("user_directory").select("*").limit(500),
     ]);
 
     role = (r as RoleCode) ?? "non_member";
     profile = p;
     directory = dirData ?? [];
 
-    if (activeTab === "sent") {
-      const { data: sentMessages } = await supabase
-        .from("messages")
-        .select("id,subject,body,sent_at,sender_id,message_recipients(recipient:profiles(id,first_name,last_name,avatar_url))")
-        .eq("sender_id", user.id)
-        .is("sender_deleted_at", null)
-        .order("sent_at", { ascending: false });
-
-      inboxList = (sentMessages || []).map((m: any) => ({
-        id: m.id,
-        subject: m.subject,
-        body: m.body,
-        sent_at: m.sent_at,
-        sender_id: m.sender_id,
-        is_read: true,
-        sender: profile,
-        recipients: (m.message_recipients || []).map((mr: any) => mr.recipient),
-      }));
-    } else {
-      const { data: received } = await supabase
-        .from("message_recipients")
-        .select("is_read,message_id,messages(id,subject,body,sent_at,sender_id,sender:profiles!messages_sender_id_fkey(id,first_name,last_name,avatar_url))")
-        .eq("recipient_id", user.id)
-        .is("deleted_at", null)
-        .order("is_read", { ascending: true });
-
-      inboxList = (received || [])
-        .filter((r: any) => r.messages)
-        .map((r: any) => ({
-          id: r.messages.id,
-          subject: r.messages.subject,
-          body: r.messages.body,
-          sent_at: r.messages.sent_at,
-          sender_id: r.messages.sender_id,
-          is_read: r.is_read,
-          sender: r.messages.sender,
-          recipients: [profile],
-        }));
-
-      if (activeTab === "unread") {
-        inboxList = inboxList.filter((m) => !m.is_read);
-      }
+    // Build lookup map from user_directory so students can resolve officer/faculty/other profiles
+    // even when `profiles` table RLS restricts direct joins.
+    const dirMap = new Map<string, any>();
+    for (const u of directory) {
+      if (u?.id) dirMap.set(u.id, u);
+    }
+    if (profile?.id && !dirMap.has(profile.id)) {
+      dirMap.set(profile.id, { ...profile, role_code: role });
     }
 
-    // Auto mark as read if thread is opened
-    if (selectedThreadId && activeTab !== "sent") {
-      await supabase
+    const resolvePerson = (id?: string | null, joined?: any) => {
+      if (id && dirMap.has(id)) return dirMap.get(id);
+      if (joined?.id) return { ...joined, role_code: joined.role_code ?? null };
+      if (id) return { id, first_name: "", last_name: "", role_code: null };
+      return null;
+    };
+
+    // ── INBOX / UNREAD TAB ────────────────────────────────────
+    const [{ data: received }, { data: sent }] = await Promise.all([
+      supabase
         .from("message_recipients")
-        .update({ is_read: true, read_at: new Date().toISOString() })
-        .eq("message_id", selectedThreadId)
-        .eq("recipient_id", user.id);
+        .select(`
+          is_read, message_id,
+          messages(
+            id, subject, body, sent_at, sender_id, parent_id,
+            sender:profiles!messages_sender_id_fkey(id,first_name,last_name,avatar_url)
+          )
+        `)
+        .eq("recipient_id", user.id)
+        .is("deleted_at", null)
+        .order("is_read", { ascending: true }),
+      supabase
+        .from("messages")
+        .select(`
+          id, subject, body, sent_at, sender_id, parent_id,
+          message_recipients(recipient_id, recipient:profiles(id,first_name,last_name,avatar_url))
+        `)
+        .eq("sender_id", user.id)
+        .is("sender_deleted_at", null),
+    ]);
+
+    const receivedMsgs = (received || [])
+      .filter((r: any) => r.messages)
+      .map((r: any) => ({
+        id: r.messages.id,
+        subject: r.messages.subject,
+        body: r.messages.body,
+        sent_at: r.messages.sent_at,
+        sender_id: r.messages.sender_id,
+        parent_id: r.messages.parent_id,
+        is_read: r.is_read,
+        sender: resolvePerson(r.messages.sender_id, r.messages.sender),
+        recipients: [resolvePerson(user.id, profile)].filter(Boolean),
+        _isSentByMe: false,
+      }));
+
+    const sentMsgs = (sent || []).map((m: any) => ({
+      id: m.id,
+      subject: m.subject,
+      body: m.body,
+      sent_at: m.sent_at,
+      sender_id: m.sender_id,
+      parent_id: m.parent_id,
+      is_read: true,
+      sender: resolvePerson(m.sender_id, profile),
+      recipients: (m.message_recipients || [])
+        .map((mr: any) => resolvePerson(mr.recipient_id, mr.recipient))
+        .filter(Boolean),
+      _isSentByMe: true,
+    }));
+
+    // Merge and deduplicate by id
+    const msgById = new Map<number, any>();
+    [...receivedMsgs, ...sentMsgs].forEach((m) => {
+      if (!msgById.has(m.id)) {
+        msgById.set(m.id, m);
+      } else {
+        const existing = msgById.get(m.id)!;
+        if (existing._isSentByMe && !m._isSentByMe) {
+          msgById.set(m.id, m);
+        }
+      }
+    });
+
+    const allMsgs = Array.from(msgById.values());
+    let allThreads = buildThreads(allMsgs, user.id);
+
+    if (activeTab === "unread") {
+      allThreads = allThreads.filter((t) => !t.is_read);
+    }
+
+    threads = allThreads;
+
+    // Auto mark the currently viewed thread as read via security-definer RPC
+    // (direct UPDATE on message_recipients is blocked by RLS).
+    if (threads.length > 0) {
+      const activeT = selectedThreadId
+        ? threads.find(
+            (t) =>
+              t.threadId === selectedThreadId ||
+              t.latestId === selectedThreadId ||
+              t.allMessages.some((m: any) => m.id === selectedThreadId)
+          ) || threads[0]
+        : threads[0];
+
+      if (activeT) {
+        const unreadIds: number[] = activeT.allMessages
+          .filter((m: any) => !m._isSentByMe && !m.is_read)
+          .map((m: any) => m.id);
+
+        if (unreadIds.length > 0) {
+          await Promise.all(
+            unreadIds.map((id) =>
+              supabase.rpc("mark_message_read", { p_message_id: id })
+            )
+          );
+          activeT.is_read = true;
+          for (const m of activeT.allMessages) {
+            if (!m._isSentByMe) m.is_read = true;
+          }
+        }
+      }
     }
   } catch (err: any) {
     if (err?.message === "NEXT_REDIRECT") throw err;
     console.error("Inbox data fetch error:", err);
   }
 
-  const selectedMessage = selectedThreadId
-    ? inboxList.find((m) => m.id === selectedThreadId) || null
-    : inboxList[0] || null;
+  // Find selected thread (match by root threadId, latestId, or any message id inside the thread)
+  const selectedThread = selectedThreadId
+    ? threads.find(
+        (t) =>
+          t.threadId === selectedThreadId ||
+          t.latestId === selectedThreadId ||
+          t.allMessages.some((m: any) => m.id === selectedThreadId)
+      ) ||
+      threads[0] ||
+      null
+    : threads[0] || null;
 
-  const fullName = profile ? `${profile.first_name} ${profile.last_name}` : "User";
+  const fullName = profile
+    ? `${profile.first_name} ${profile.last_name}`
+    : "User";
   const roleLabel = ROLE_LABELS[role] || "Student";
 
   return (
@@ -116,112 +199,110 @@ export default async function InboxPage({
       userName={fullName}
       userRoleLabel={roleLabel}
     >
-      <div className="space-y-6 w-full">
+      <div className="space-y-5 w-full">
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <h1 className="text-[30px] leading-[38px] font-bold text-[#1C1713] tracking-[-0.5px]">
+          <div className="space-y-1">
+            <h1 className="text-[28px] leading-9 font-bold text-ink-900 tracking-[-0.5px]">
               Internal Messaging
             </h1>
-            <p className="text-[15px] text-[#817B77]">
+            <p className="text-[14px] text-text-500">
               Communicate directly with CIT-U chapter student officers and faculty.
             </p>
           </div>
-
           <ComposeMessageModal directory={directory} />
         </div>
 
         {/* Tab Filters */}
         <div className="flex items-center gap-2.5">
-          <Link
-            href="/inbox"
-            className={`h-[32px] px-[14px] rounded-full text-[13px] font-semibold transition-colors flex items-center ${
-              activeTab === "all"
-                ? "bg-[#19A7D5] text-[#12191C]"
-                : "bg-white border border-[#DEDBD8] text-[#817B77] hover:text-[#1C1713]"
-            }`}
-          >
-            Inbox
-          </Link>
-          <Link
-            href="/inbox?tab=unread"
-            className={`h-[32px] px-[14px] rounded-full text-[13px] font-semibold transition-colors flex items-center ${
-              activeTab === "unread"
-                ? "bg-[#19A7D5] text-[#12191C]"
-                : "bg-white border border-[#DEDBD8] text-[#817B77] hover:text-[#1C1713]"
-            }`}
-          >
-            Unread
-          </Link>
-          <Link
-            href="/inbox?tab=sent"
-            className={`h-[32px] px-[14px] rounded-full text-[13px] font-semibold transition-colors flex items-center ${
-              activeTab === "sent"
-                ? "bg-[#19A7D5] text-[#12191C]"
-                : "bg-white border border-[#DEDBD8] text-[#817B77] hover:text-[#1C1713]"
-            }`}
-          >
-            Sent
-          </Link>
+          {[
+            { label: "Inbox", tab: "all", href: "/inbox" },
+            { label: "Unread", tab: "unread", href: "/inbox?tab=unread" },
+          ].map(({ label, tab, href }) => (
+            <Link
+              key={tab}
+              href={href}
+              className={`h-8 px-3.5 rounded-full text-[13px] font-semibold transition-colors flex items-center ${
+                activeTab === tab
+                  ? "bg-cyan-500 text-on-brand"
+                  : "bg-white border border-border-default text-text-500 hover:text-ink-900"
+              }`}
+            >
+              {label}
+            </Link>
+          ))}
         </div>
 
-        {/* Messaging Layout: Threads List + Thread Detail */}
-        <div className="bg-white border border-[#DEDBD8] rounded-[16px] overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-[550px] shadow-xs">
-          {/* Threads Column (5 cols) */}
-          <div className="md:col-span-5 border-r border-[#EEECEA] flex flex-col">
-            <div className="p-3 border-b border-[#EEECEA] bg-[#FAF9F8]">
-              <span className="text-[12px] font-bold text-[#817B77] uppercase tracking-wider">
-                {activeTab === "sent" ? "Sent Messages" : "Conversations"} ({inboxList.length})
+        {/* Messaging Layout: fixed viewport height so list + chat scroll independently */}
+        <div className="bg-white border border-border-default rounded-2xl overflow-hidden grid grid-cols-1 md:grid-cols-12 h-[calc(100vh-230px)] min-h-135 max-h-190 shadow-xs">
+          {/* Thread List (4/5 cols) */}
+          <div className="md:col-span-4 lg:col-span-4 border-r border-divider flex flex-col min-h-0">
+            <div className="px-4 py-3 border-b border-divider bg-surface-50 shrink-0">
+              <span className="text-[11px] font-bold text-text-500 uppercase tracking-wider">
+                Conversations ({threads.length})
               </span>
             </div>
 
-            <div className="flex-1 overflow-y-auto divide-y divide-[#EEECEA]">
-              {inboxList.length > 0 ? (
-                inboxList.map((msg) => {
-                  const isSelected = selectedMessage?.id === msg.id;
-                  const isUnread = !msg.is_read;
-                  const partyName = activeTab === "sent"
-                    ? msg.recipients?.[0]
-                      ? `${msg.recipients[0].first_name} ${msg.recipients[0].last_name}`
-                      : "Recipient"
-                    : msg.sender
-                    ? `${msg.sender.first_name} ${msg.sender.last_name}`
-                    : "Chapter Member";
+            <div className="flex-1 overflow-y-auto divide-y divide-divider">
+              {threads.length > 0 ? (
+                threads.map((thread) => {
+                  const isSelected =
+                    selectedThread?.threadId === thread.threadId;
+                  const isUnread = !thread.is_read;
+
+                  const partyName = thread.otherPartyName || "Chapter Member";
 
                   return (
                     <Link
-                      key={msg.id}
-                      href={`/inbox?tab=${activeTab}&thread=${msg.id}`}
+                      key={thread.threadId}
+                      href={`/inbox?tab=${activeTab}&thread=${thread.threadId}`}
                       className={`p-4 block transition-colors ${
                         isSelected
-                          ? "bg-[#E3F6FC]/60"
+                          ? "bg-cyan-50/65 border-l-2 border-l-cyan-500"
                           : isUnread
-                          ? "bg-[#E3F6FC]/20 hover:bg-[#E3F6FC]/40"
-                          : "hover:bg-[#FAF9F8]"
+                          ? "bg-cyan-50/20 hover:bg-cyan-50/40"
+                          : "hover:bg-surface-50"
                       }`}
                     >
-                      <div className="flex items-center justify-between text-xs mb-1">
-                        <span className={`font-bold truncate ${isUnread ? "text-[#0087B5]" : "text-[#1C1713]"}`}>
+                      <div className="flex items-center justify-between text-xs mb-1 gap-2">
+                        <span
+                          className={`font-bold truncate ${
+                            isUnread ? "text-cyan-600" : "text-ink-900"
+                          }`}
+                        >
                           {partyName}
                         </span>
-                        <span className="text-[11px] text-[#817B77] shrink-0">
-                          {new Date(msg.sent_at).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {thread.messageCount > 1 && (
+                            <span className="text-[10px] bg-cyan-50 text-cyan-600 font-bold px-1.5 py-0.5 rounded-full">
+                              {thread.messageCount}
+                            </span>
+                          )}
+                          <span className="text-[11px] text-text-500">
+                            {new Date(thread.sent_at).toLocaleDateString(
+                              "en-US",
+                              { month: "short", day: "numeric" }
+                            )}
+                          </span>
+                        </div>
                       </div>
-                      <h4 className={`text-[13px] truncate ${isUnread ? "font-bold text-[#1C1713]" : "font-semibold text-[#514B47]"}`}>
-                        {msg.subject}
+                      <h4
+                        className={`text-[13px] truncate ${
+                          isUnread
+                            ? "font-bold text-ink-900"
+                            : "font-semibold text-text-600"
+                        }`}
+                      >
+                        {thread.subject}
                       </h4>
-                      <p className="text-[12px] text-[#817B77] truncate mt-0.5">
-                        {msg.body}
+                      <p className="text-[12px] text-text-500 truncate mt-0.5">
+                        {thread.body}
                       </p>
                     </Link>
                   );
                 })
               ) : (
-                <div className="p-8 text-center text-xs text-[#817B77] space-y-2">
+                <div className="p-8 text-center text-xs text-text-500 space-y-2">
                   <InboxIcon className="w-6 h-6 mx-auto opacity-50" />
                   <p>No messages in this folder.</p>
                 </div>
@@ -229,16 +310,17 @@ export default async function InboxPage({
             </div>
           </div>
 
-          {/* Thread Content Column (7 cols) */}
-          <div className="md:col-span-7 flex flex-col bg-white">
-            {selectedMessage ? (
+          {/* Thread Detail (8 cols) */}
+          <div className="md:col-span-8 lg:col-span-8 flex flex-col bg-white min-h-0">
+            {selectedThread ? (
               <MessageThreadView
-                message={selectedMessage}
+                thread={selectedThread}
                 currentUserId={user.id}
+                currentUserProfile={{ ...profile, role_code: role }}
               />
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center p-12 text-center text-xs text-[#817B77] space-y-2">
-                <Mail className="w-8 h-8 opacity-40 text-[#0087B5]" />
+              <div className="flex-1 flex flex-col items-center justify-center p-12 text-center text-xs text-text-500 space-y-2">
+                <Mail className="w-8 h-8 opacity-40 text-cyan-600" />
                 <p>Select a message to view the conversation thread.</p>
               </div>
             )}
@@ -247,4 +329,77 @@ export default async function InboxPage({
       </div>
     </PortalShell>
   );
+}
+
+// ── Helper: group flat message list into conversation threads ──────────────
+function buildThreads(messages: any[], currentUserId: string) {
+  if (!messages.length) return [];
+
+  const msgMap = new Map<number, any>();
+  messages.forEach((m) => msgMap.set(m.id, m));
+
+  function getRootId(msg: any, visited = new Set<number>()): number {
+    if (!msg.parent_id) return msg.id;
+    if (visited.has(msg.id)) return msg.id;
+    visited.add(msg.id);
+    const parent = msgMap.get(msg.parent_id);
+    if (!parent) return msg.id;
+    return getRootId(parent, visited);
+  }
+
+  const threadMap = new Map<number, any[]>();
+  messages.forEach((m) => {
+    const rootId = getRootId(m);
+    if (!threadMap.has(rootId)) threadMap.set(rootId, []);
+    threadMap.get(rootId)!.push(m);
+  });
+
+  const result = Array.from(threadMap.values()).map((msgs) => {
+    msgs.sort(
+      (a, b) => new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime()
+    );
+    const latest = msgs[0];
+    const root = msgs[msgs.length - 1];
+
+    // Scan messages in thread to reliably identify the other participant
+    let otherPartyProfile: any = null;
+    for (const m of msgs) {
+      if (m.sender_id && m.sender_id !== currentUserId && m.sender) {
+        otherPartyProfile = m.sender;
+        break;
+      }
+      const otherRecip = (m.recipients || []).find(
+        (r: any) => r?.id && r.id !== currentUserId
+      );
+      if (otherRecip) {
+        otherPartyProfile = otherRecip;
+        break;
+      }
+    }
+
+    const otherPartyName = formatFormalName(otherPartyProfile);
+    const hasUnread = msgs.some((m) => !m._isSentByMe && !m.is_read);
+
+    return {
+      threadId: root.id,
+      latestId: latest.id,
+      subject: stripRePrefix(root.subject),
+      body: latest.body,
+      sent_at: latest.sent_at,
+      sender_id: latest.sender_id,
+      is_read: !hasUnread,
+      sender: latest.sender,
+      recipients: latest.recipients,
+      otherParty: otherPartyProfile,
+      otherPartyName,
+      messageCount: msgs.length,
+      allMessages: msgs,
+    };
+  });
+
+  result.sort(
+    (a, b) => new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime()
+  );
+
+  return result;
 }

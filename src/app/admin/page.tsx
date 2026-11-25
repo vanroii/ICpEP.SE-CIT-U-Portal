@@ -101,10 +101,10 @@ export default async function AdminPage({
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1.5">
-            <h1 className="text-[30px] leading-[38px] font-bold text-[#1C1713] tracking-[-0.5px]">
+            <h1 className="text-[30px] leading-[38px] font-bold text-ink-900 tracking-[-0.5px]">
               System Administration
             </h1>
-            <p className="text-[15px] text-[#817B77]">
+            <p className="text-[15px] text-text-500">
               Manage user accounts, assign organization roles, and configure portal settings.
             </p>
           </div>
@@ -113,8 +113,8 @@ export default async function AdminPage({
             <Link
               href="/admin"
               className={`h-[36px] px-4 rounded-[8px] font-semibold text-xs flex items-center transition-colors ${activeTab === "users"
-                  ? "bg-[#19A7D5] text-[#12191C]"
-                  : "bg-white border border-[#DEDBD8] text-[#817B77] hover:text-[#1C1713]"
+                  ? "bg-cyan-500 text-on-brand"
+                  : "bg-white border border-border-default text-text-500 hover:text-ink-900"
                 }`}
             >
               <Users className="w-4 h-4 mr-1.5" />
@@ -123,8 +123,8 @@ export default async function AdminPage({
             <Link
               href="/admin?tab=settings"
               className={`h-[36px] px-4 rounded-[8px] font-semibold text-xs flex items-center transition-colors ${activeTab === "settings"
-                  ? "bg-[#19A7D5] text-[#12191C]"
-                  : "bg-white border border-[#DEDBD8] text-[#817B77] hover:text-[#1C1713]"
+                  ? "bg-cyan-500 text-on-brand"
+                  : "bg-white border border-border-default text-text-500 hover:text-ink-900"
                 }`}
             >
               <Settings className="w-4 h-4 mr-1.5" />
@@ -135,48 +135,48 @@ export default async function AdminPage({
 
         {/* 4 Stat Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-5 space-y-1.5 shadow-xs">
-            <div className="flex items-center justify-between text-[#0087B5]">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#817B77]">
+          <div className="bg-white border border-border-default rounded-2xl p-5 space-y-1.5 shadow-xs">
+            <div className="flex items-center justify-between text-cyan-600">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-text-500">
                 Total Accounts
               </span>
               <Users className="w-4 h-4" />
             </div>
-            <p className="text-2xl font-bold text-[#1C1713]">{totalUsers}</p>
-            <p className="text-[12px] text-[#817B77]">Registered in database</p>
+            <p className="text-2xl font-bold text-ink-900">{totalUsers}</p>
+            <p className="text-[12px] text-text-500">Registered in database</p>
           </div>
 
-          <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-5 space-y-1.5 shadow-xs">
-            <div className="flex items-center justify-between text-[#15803D]">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#817B77]">
+          <div className="bg-white border border-border-default rounded-2xl p-5 space-y-1.5 shadow-xs">
+            <div className="flex items-center justify-between text-status-success">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-text-500">
                 Active Users
               </span>
               <UserCheck className="w-4 h-4" />
             </div>
-            <p className="text-2xl font-bold text-[#1C1713]">{activeUsers}</p>
-            <p className="text-[12px] text-[#817B77]">Can authenticate</p>
+            <p className="text-2xl font-bold text-ink-900">{activeUsers}</p>
+            <p className="text-[12px] text-text-500">Can authenticate</p>
           </div>
 
-          <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-5 space-y-1.5 shadow-xs">
-            <div className="flex items-center justify-between text-[#0087B5]">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#817B77]">
+          <div className="bg-white border border-border-default rounded-2xl p-5 space-y-1.5 shadow-xs">
+            <div className="flex items-center justify-between text-cyan-600">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-text-500">
                 Verified Members
               </span>
               <Award className="w-4 h-4" />
             </div>
-            <p className="text-2xl font-bold text-[#1C1713]">{membersCount}</p>
-            <p className="text-[12px] text-[#817B77]">ICpEP Members</p>
+            <p className="text-2xl font-bold text-ink-900">{membersCount}</p>
+            <p className="text-[12px] text-text-500">ICpEP Members</p>
           </div>
 
-          <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-5 space-y-1.5 shadow-xs">
-            <div className="flex items-center justify-between text-[#B45309]">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#817B77]">
+          <div className="bg-white border border-border-default rounded-2xl p-5 space-y-1.5 shadow-xs">
+            <div className="flex items-center justify-between text-status-post-officer">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-text-500">
                 Officers & Admins
               </span>
               <Shield className="w-4 h-4" />
             </div>
-            <p className="text-2xl font-bold text-[#1C1713]">{officersCount}</p>
-            <p className="text-[12px] text-[#817B77]">Elevated permissions</p>
+            <p className="text-2xl font-bold text-ink-900">{officersCount}</p>
+            <p className="text-[12px] text-text-500">Elevated permissions</p>
           </div>
         </div>
 
@@ -186,24 +186,24 @@ export default async function AdminPage({
             <SiteSettingsForm settings={settingsMap} />
           </div>
         ) : (
-          <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-6 space-y-5 shadow-xs">
+          <div className="bg-white border border-border-default rounded-2xl p-6 space-y-5 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1">
-                <h2 className="text-[18px] font-bold text-[#1C1713]">
+                <h2 className="text-[18px] font-bold text-ink-900">
                   All Registered Users ({filteredUsers.length})
                 </h2>
-                <p className="text-xs text-[#817B77]">
+                <p className="text-xs text-text-500">
                   Assign roles, promote student officers, or deactivate accounts.
                 </p>
               </div>
 
               <form method="get" className="relative w-full sm:w-[260px]">
-                <Search className="w-4 h-4 text-[#817B77] absolute left-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-4 h-4 text-text-500 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   name="q"
                   defaultValue={search}
                   placeholder="Search user, ID, email..."
-                  className="w-full h-[40px] pl-9 pr-3 bg-white border border-[#C9C5C2] rounded-[10px] text-[13px] text-[#1C1713] placeholder-[#817B77] outline-none focus:border-[#19A7D5]"
+                  className="w-full h-[40px] pl-9 pr-3 bg-white border border-border-input rounded-[10px] text-[13px] text-ink-900 placeholder-text-500 outline-none focus:border-cyan-500"
                 />
               </form>
             </div>
@@ -212,7 +212,7 @@ export default async function AdminPage({
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-[#EEECEA] text-[#817B77] bg-[#FAF9F8]">
+                    <tr className="border-b border-divider text-text-500 bg-surface-50">
                       <th className="py-3 px-4 font-bold">NAME & EMAIL</th>
                       <th className="py-3 px-4 font-bold">ID NUMBER</th>
                       <th className="py-3 px-4 font-bold">PROGRAM / DEPT</th>
@@ -221,38 +221,38 @@ export default async function AdminPage({
                       <th className="py-3 px-4 font-bold text-right">MANAGE</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#EEECEA]">
+                  <tbody className="divide-y divide-divider">
                     {filteredUsers.map((u) => (
-                      <tr key={u.id} className="hover:bg-[#FAF9F8] transition-colors">
+                      <tr key={u.id} className="hover:bg-surface-50 transition-colors">
                         <td className="py-3 px-4">
-                          <p className="font-bold text-[#1C1713]">
+                          <p className="font-bold text-ink-900">
                             {u.first_name} {u.last_name}
                           </p>
-                          <p className="text-[11px] text-[#817B77]">{u.email}</p>
+                          <p className="text-[11px] text-text-500">{u.email}</p>
                         </td>
-                        <td className="py-3 px-4 font-mono font-medium text-[#1C1713]">
+                        <td className="py-3 px-4 font-mono font-medium text-ink-900">
                           {u.roles?.code === "faculty"
                             ? (u.employee_id || u.department || "—")
                             : (u.student_number || "—")}
                         </td>
-                        <td className="py-3 px-4 text-[#514B47]">
+                        <td className="py-3 px-4 text-text-600">
                           {u.roles?.code === "faculty"
                             ? (u.department ? `${u.department} · Faculty` : "Faculty")
                             : `${u.program || "BS CpE"} ${u.year_level ? `· Yr ${u.year_level}` : ""}`}
                         </td>
                         <td className="py-3 px-4">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#E3F6FC] text-[#0087B5]">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-cyan-50 text-cyan-600">
                             {u.roles?.name || u.roles?.code || "Non-Member"}
                           </span>
                         </td>
                         <td className="py-3 px-4">
                           {u.is_active ? (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#15803D]">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#15803D]" /> Active
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-status-success">
+                              <span className="w-1.5 h-1.5 rounded-full bg-status-success" /> Active
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#B91C1C]">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#B91C1C]" /> Deactivated
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-status-danger">
+                              <span className="w-1.5 h-1.5 rounded-full bg-status-danger" /> Deactivated
                             </span>
                           )}
                         </td>
@@ -265,7 +265,7 @@ export default async function AdminPage({
                 </table>
               </div>
             ) : (
-              <div className="py-12 text-center text-xs text-[#817B77]">
+              <div className="py-12 text-center text-xs text-text-500">
                 No users match the search query.
               </div>
             )}
