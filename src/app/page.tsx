@@ -74,38 +74,31 @@ export default async function LandingHomePage() {
   const displayEvents = events.length > 0 ? events : fallbackEvents;
 
   return (
-    <div className="w-full bg-surface-page flex flex-col">
+    <div className="h-screen w-full overflow-y-auto bg-surface-page flex flex-col snap-y snap-mandatory scroll-smooth scroll-pt-[78px]">
       {/* 1. Public Navbar (1440x78) */}
       <PublicNavbar />
 
       <div className="w-full flex flex-col">
         {/* 2. Hero Section (1440x664, px-[120px] py-[88px]) */}
-        <section className="w-full hero-gradient px-5 sm:px-12 lg:px-[120px] py-16 sm:py-[88px]">
-          <div className="max-w-[1200px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-[72px]">
+        <section className="relative flex w-full min-h-[calc(100vh-78px)] shrink-0 snap-start items-center overflow-hidden hero-gradient px-5 sm:px-12 lg:px-[120px] py-16 sm:py-[88px]">
+          <div className="relative z-10 w-full max-w-[1200px] mx-auto">
             {/* Hero Copy (580px wide) */}
-            <div className="flex-1 max-w-[580px] space-y-6">
-              {/* Eyebrow Pill */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-[7px] bg-[#26343B] rounded-full">
-                <span className="w-2 h-2 rounded-full bg-cyan-500 shrink-0" />
-                <span className="text-[13px] font-medium text-text-dark leading-tight">
-                  Institute of Computer Engineers of the Philippines — Student Edition
-                </span>
-              </div>
-
+            <div className="max-w-[880px]">
               {/* Headline */}
-              <h1 className="text-[40px] sm:text-[54px] leading-[1.15] font-extrabold text-white tracking-[-1.2px]">
-                Where CIT-U computer engineers learn, build, and belong.
+              <h1 className="text-[40px] sm:text-[50px] leading-[1.15] font-extrabold text-white tracking-[-1.2px]">
+                Institute of Computer Engineers 
+                <br />
+                of the Philippines
               </h1>
 
               {/* Subheading */}
-              <p className="text-[16px] sm:text-[18px] leading-[28px] text-text-dark">
-                Join the official student organization for Computer Engineering at Cebu
-                Institute of Technology – University. Workshops, competitions, and a
-                community that has your back.
+              <p className="mt-5 max-w-[660px] text-[16px] sm:text-[18px] leading-[28px] text-text-dark">
+                The official portal for CIT-U Computer Engineering students. Connect with your peers,
+                register for workshops, access member-exclusive competitions, and advance your
+                engineering journey.
               </p>
-
               {/* Actions */}
-              <div className="flex flex-wrap items-center gap-3.5 pt-2">
+              <div className="mt-8 flex flex-wrap items-center gap-3.5">
                 <Link
                   href="/register"
                   className="h-[43px] px-[22px] flex items-center justify-center rounded-[8px] bg-cyan-500 hover:bg-[#1695bf] active:bg-[#1383a8] text-on-brand text-[14px] font-semibold transition-colors"
@@ -120,17 +113,16 @@ export default async function LandingHomePage() {
                 </Link>
               </div>
             </div>
+          </div>
 
-            {/* Hero image placeholder (488x420, bg #26343B bd #315261 r24) */}
-            <div className="w-full max-w-[488px] h-[360px] sm:h-[420px] rounded-[24px] bg-[#26343B] border border-[#315261] flex items-center justify-center shadow-lg relative overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/10 to-transparent pointer-events-none" />
-              <LogoLarge size={160} />
-            </div>
+          {/* Hero emblem */}
+          <div className="pointer-events-none absolute -bottom-24 -right-24 opacity-[0.55] sm:-bottom-28 sm:-right-28 lg:-bottom-32 lg:-right-32">
+            <LogoLarge size={680} className="h-auto w-[380px] sm:w-[520px] lg:w-[680px]" />
           </div>
         </section>
 
         {/* 4. About / What We Do Section (1440x600, px-[120px] py-[96px], bg #FFFFFF) */}
-        <section className="w-full bg-white px-5 sm:px-12 lg:px-[120px] py-16 sm:py-[96px]">
+        <section className="w-full min-h-[calc(100vh-78px)] shrink-0 snap-start landing-continuation-gradient px-5 sm:px-12 lg:px-[120px] py-16 sm:py-[96px]">
           <div className="max-w-[1200px] mx-auto space-y-12">
             <div className="max-w-[640px] space-y-3">
               <p className="text-[13px] font-bold tracking-[1.2px] text-cyan-600 uppercase">
@@ -166,8 +158,8 @@ export default async function LandingHomePage() {
         </section>
 
         {/* 5. Events / Upcoming (1440x601, px-[120px] py-[96px], bg #F8F8F7) */}
-        <section id="events" className="w-full scroll-mt-[78px] bg-surface-page px-5 sm:px-12 lg:px-[120px] py-16 sm:py-[96px]">
-          <div className="max-w-[1200px] mx-auto space-y-10">
+        <section id="events" className="w-full min-h-[calc(100vh-78px)] shrink-0 snap-start bg-surface-page px-5 sm:px-12 lg:px-[120px] py-16 sm:py-[96px]">
+          <div className="max-w-[1200px] mx-auto space-y-12">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <div className="space-y-3">
                 <p className="text-[13px] font-bold tracking-[1.2px] text-cyan-600 uppercase">
@@ -248,7 +240,7 @@ export default async function LandingHomePage() {
         </section>
 
         {/* 6. CTA Section (1440x354, px-[120px] py-[88px], bg #FFFFFF) */}
-        <section className="w-full bg-white px-5 sm:px-12 lg:px-[120px] py-16 sm:py-[88px]">
+        <section className="w-full shrink-0 snap-start bg-white px-5 sm:px-12 lg:px-[120px] py-16 sm:py-[88px]">
           <div className="max-w-[1200px] mx-auto hero-gradient rounded-[24px] p-8 sm:p-[52px_56px] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div className="space-y-2.5 max-w-[640px]">
               <h3 className="text-[26px] sm:text-[32px] leading-[40px] font-bold text-white tracking-[-0.4px]">
@@ -269,7 +261,9 @@ export default async function LandingHomePage() {
       </div>
 
       {/* 7. Footer (1440x398) */}
-      <PublicFooter />
+      <div className="shrink-0 snap-start">
+        <PublicFooter />
+      </div>
     </div>
   );
 }

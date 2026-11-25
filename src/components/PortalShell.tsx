@@ -86,15 +86,19 @@ function SidebarNav({
   activeItemOverride,
   onNavigate,
   collapsed,
+  hovered,
 }: {
   navItems: NavItem[];
   activeItemOverride?: string;
   onNavigate: () => void;
   collapsed: boolean;
+  hovered?: boolean;
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentTab = searchParams.get("tab") ?? "";
+  // On desktop, treat the sidebar as expanded when hovered (even if collapsed)
+  const effectiveCollapsed = collapsed && !hovered;
 
   function isActive(item: NavItem): boolean {
     if (activeItemOverride) return activeItemOverride === item.label;
@@ -126,7 +130,7 @@ function SidebarNav({
             title={collapsed ? item.label : undefined}
             aria-label={collapsed ? item.label : undefined}
             className={`h-10.5 rounded-[10px] flex items-center transition-colors ${
-              collapsed ? "px-3.5 gap-3 lg:justify-center lg:px-0 lg:gap-0" : "px-3.5 gap-3"
+              effectiveCollapsed ? "px-3.5 gap-3 lg:justify-center lg:px-0 lg:gap-0" : "px-3.5 gap-3"
             } ${
               active
                 ? "bg-cyan-50 text-cyan-600"
@@ -137,7 +141,7 @@ function SidebarNav({
               className={`w-5 h-5 shrink-0 ${active ? "text-cyan-600" : "text-text-dark"}`}
             />
             <span
-              className={`text-[14px] truncate ${collapsed ? "lg:sr-only" : ""} ${
+              className={`text-[14px] truncate ${effectiveCollapsed ? "lg:sr-only" : ""} ${
                 active ? "font-semibold text-cyan-600" : "font-medium"
               }`}
             >
@@ -161,6 +165,7 @@ export function PortalShell({
 }: PortalShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [sidebarHovered, setSidebarHovered] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(initialUnreadNotifications ?? 0);
   const [unreadMessages, setUnreadMessages] = useState(initialUnreadMessages ?? 0);
   const [openPanel, setOpenPanel] = useState<QuickPanelType>(null);
@@ -292,9 +297,12 @@ export function PortalShell({
 
   const closeSidebar = () => setSidebarOpen(false);
 
+  // On desktop, the sidebar visually expands when hovered even if pinned collapsed
+  const effectiveCollapsed = sidebarCollapsed && !sidebarHovered;
+
   const sidebarContent = (
     <>
-      <div className={`space-y-6 ${sidebarCollapsed ? "lg:space-y-6" : ""}`}>
+      <div className={`space-y-6 ${effectiveCollapsed ? "lg:space-y-6" : ""}`}>
         <button
           type="button"
           onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
@@ -302,11 +310,11 @@ export function PortalShell({
           aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           aria-expanded={!sidebarCollapsed}
           className={`hidden lg:flex w-full items-center select-none ${
-            sidebarCollapsed ? "justify-center" : "gap-3"
+            effectiveCollapsed ? "justify-center" : "gap-3"
           }`}
         >
           <LogoMark size={40} />
-          {!sidebarCollapsed && (
+          {!effectiveCollapsed && (
             <div className="flex flex-col leading-none text-left">
               <span className="text-[16px] font-bold text-white tracking-[-0.2px]">ICpEP.SE</span>
               <span className="text-[11px] font-medium text-text-mute mt-0.5">
@@ -334,11 +342,11 @@ export function PortalShell({
                 <div
                   key={item.label}
                   className={`h-10.5 px-3.5 rounded-[10px] flex items-center gap-3 text-text-dark ${
-                    sidebarCollapsed ? "lg:justify-center lg:px-0 lg:gap-0" : ""
+                    effectiveCollapsed ? "lg:justify-center lg:px-0 lg:gap-0" : ""
                   }`}
                 >
                   <item.icon className="w-5 h-5 shrink-0 text-text-dark" />
-                  <span className={`text-[14px] font-medium ${sidebarCollapsed ? "lg:sr-only" : ""}`}>
+                  <span className={`text-[14px] font-medium ${effectiveCollapsed ? "lg:sr-only" : ""}`}>
                     {item.label}
                   </span>
                 </div>
@@ -351,41 +359,42 @@ export function PortalShell({
             activeItemOverride={activeItem}
             onNavigate={closeSidebar}
             collapsed={sidebarCollapsed}
+            hovered={sidebarHovered}
           />
         </Suspense>
       </div>
 
       {/* Footer */}
-      <div className={`space-y-2 pt-4 border-t border-ink-border ${sidebarCollapsed ? "lg:space-y-3" : ""}`}>
+      <div className={`space-y-2 pt-4 border-t border-ink-border ${effectiveCollapsed ? "lg:space-y-3" : ""}`}>
         <Link
           href="/settings"
           onClick={closeSidebar}
-          title={sidebarCollapsed ? "Account settings" : undefined}
-          aria-label={sidebarCollapsed ? "Account settings" : undefined}
+          title={effectiveCollapsed ? "Account settings" : undefined}
+          aria-label={effectiveCollapsed ? "Account settings" : undefined}
           className={`w-full bg-ink-800 hover:bg-[#342e2a] transition-colors rounded-xl flex items-center gap-3 ${
-            sidebarCollapsed ? "p-3 lg:justify-center lg:p-2" : "p-3"
+            effectiveCollapsed ? "p-3 lg:justify-center lg:p-2" : "p-3"
           }`}
         >
-          <div className={`w-9 h-9 rounded-full bg-cyan-500 text-on-brand flex items-center justify-center font-bold text-[14px] shrink-0 ${sidebarCollapsed ? "lg:hidden" : ""}`}>
+          <div className={`w-9 h-9 rounded-full bg-cyan-500 text-on-brand flex items-center justify-center font-bold text-[14px] shrink-0 ${effectiveCollapsed ? "lg:hidden" : ""}`}>
             {initial}
           </div>
-          <div className={`flex-1 min-w-0 leading-tight ${sidebarCollapsed ? "lg:hidden" : ""}`}>
+          <div className={`flex-1 min-w-0 leading-tight ${effectiveCollapsed ? "lg:hidden" : ""}`}>
             <p className="text-[13px] font-semibold text-white truncate">{displayName}</p>
             <p className="text-[11px] text-text-mute truncate">{sub}</p>
           </div>
-          <Settings className={`w-4 h-4 text-text-mute shrink-0 ${sidebarCollapsed ? "lg:hidden" : ""}`} />
-          {sidebarCollapsed && <Settings className="hidden lg:block w-4 h-4 text-text-mute shrink-0" />}
+          <Settings className={`w-4 h-4 text-text-mute shrink-0 ${effectiveCollapsed ? "lg:hidden" : ""}`} />
+          {effectiveCollapsed && <Settings className="hidden lg:block w-4 h-4 text-text-mute shrink-0" />}
         </Link>
 
         <form action="/auth/signout" method="post">
           <button
             type="submit"
-            title={sidebarCollapsed ? "Sign Out" : undefined}
+            title={effectiveCollapsed ? "Sign Out" : undefined}
             aria-label="Sign Out"
             className="w-full h-[40px] rounded-[10px] bg-ink-800 hover:bg-ink-700 text-text-dark hover:text-white text-[13px] font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
           >
             <LogOut className="w-4 h-4 shrink-0" />
-            <span className={sidebarCollapsed ? "lg:hidden" : ""}>Sign Out</span>
+            <span className={effectiveCollapsed ? "lg:hidden" : ""}>Sign Out</span>
           </button>
         </form>
       </div>
@@ -481,6 +490,8 @@ export function PortalShell({
       <aside
         id="portal-sidebar"
         aria-label="Portal navigation"
+        onMouseEnter={() => { if (window.innerWidth >= 1024) setSidebarHovered(true); }}
+        onMouseLeave={() => setSidebarHovered(false)}
         onClick={(event) => {
           if (window.innerWidth < 1024) return;
           if ((event.target as HTMLElement).closest("a, button, input, select, textarea, [role='button']")) return;
@@ -490,7 +501,7 @@ export function PortalShell({
           flex flex-col justify-between p-5
           overflow-y-auto
           transition-[transform,width] duration-300 ease-in-out motion-reduce:transition-none
-          w-[min(256px,calc(100vw-3rem))] ${sidebarCollapsed ? "lg:w-[76px] lg:px-3" : "lg:w-[256px]"}
+          w-[min(256px,calc(100vw-3rem))] ${effectiveCollapsed ? "lg:w-[76px] lg:px-3" : "lg:w-[256px]"}
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0
         `}
@@ -500,8 +511,8 @@ export function PortalShell({
 
       {/* Main content area with dedicated top bar */}
       <div
-        className={`flex-1 min-w-0 flex flex-col min-h-screen transition-[margin] duration-300 motion-reduce:transition-none ${
-          sidebarCollapsed ? "lg:ml-[76px]" : "lg:ml-[256px]"
+        className={`flex-1 min-w-0 flex flex-col min-h-screen transition-[margin] duration-300 ease-in-out motion-reduce:transition-none ${
+          effectiveCollapsed ? "lg:ml-[76px]" : "lg:ml-[256px]"
         }`}
       >
         {/* Desktop Sticky Top Bar: Compact quick-actions header with tight, natural spacing */}

@@ -57,10 +57,10 @@ export function PublicNavbar() {
         </nav>
 
         {/* Actions — desktop */}
-        <div className="hidden sm:flex items-center gap-4 sm:gap-6">
+        <div className="hidden sm:flex items-center gap-3">
           <Link
             href="/login"
-            className="text-[15px] font-semibold text-cyan-500 hover:underline"
+            className="h-[43px] px-[22px] flex items-center justify-center rounded-[8px] border border-white/20 text-white hover:bg-white/10 text-[14px] font-semibold transition-colors"
           >
             Log in
           </Link>

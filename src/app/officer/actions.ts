@@ -159,6 +159,90 @@ export async function createPostAction(formData: FormData) {
   }
 }
 
+export async function updatePostAction(postId: number, formData: FormData) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Authentication required" };
+
+    const { data: role } = await supabase.rpc("auth_role");
+    if (!role || !["officer", "faculty", "admin"].includes(role)) {
+      return { error: "Only officers, faculty, or admins can edit posts." };
+    }
+
+    const title = String(formData.get("title") || "").trim();
+    const slug =
+      String(formData.get("slug") || "").trim() ||
+      title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    const postType = String(formData.get("post_type") || "news");
+    const summary = String(formData.get("summary") || "").trim();
+    const body = String(formData.get("body") || "").trim();
+    const status = String(formData.get("status") || "published");
+    const isPinned = formData.get("is_pinned") === "on";
+    const coverImageUrl = String(formData.get("cover_image_url") || "").trim() || null;
+
+    if (!title || !body) {
+      return { error: "Title and content body are required." };
+    }
+
+    const { error } = await supabase
+      .from("posts")
+      .update({
+        title,
+        slug,
+        post_type: postType,
+        summary,
+        body,
+        cover_image_url: coverImageUrl,
+        status,
+        is_pinned: isPinned,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", postId);
+
+    if (error) return { error: error.message };
+
+    revalidatePath("/news");
+    revalidatePath(`/news/${slug}`);
+    revalidatePath("/officer");
+    revalidatePath("/faculty");
+    revalidatePath("/student");
+    revalidatePath("/");
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message || "Failed to update post." };
+  }
+}
+
+export async function deletePostAction(postId: number) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Authentication required" };
+
+    const { data: role } = await supabase.rpc("auth_role");
+    if (!role || !["officer", "faculty", "admin"].includes(role)) {
+      return { error: "Only officers, faculty, or admins can delete posts." };
+    }
+
+    const { error } = await supabase
+      .from("posts")
+      .delete()
+      .eq("id", postId);
+
+    if (error) return { error: error.message };
+
+    revalidatePath("/news");
+    revalidatePath("/officer");
+    revalidatePath("/faculty");
+    revalidatePath("/student");
+    revalidatePath("/");
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message || "Failed to delete post." };
+  }
+}
+
 export async function reviewMembershipAction(
   applicationId: number,
   approve: boolean,

@@ -19,6 +19,7 @@ export async function getFeedPosts(currentUserId?: string): Promise<PostData[]> 
         status,
         visibility,
         is_pinned,
+        author_id,
         published_at,
         created_at,
         author:profiles!posts_author_id_fkey(
@@ -50,6 +51,7 @@ export async function getFeedPosts(currentUserId?: string): Promise<PostData[]> 
           status,
           visibility,
           is_pinned,
+          author_id,
           published_at,
           created_at,
           profiles:author_id(
@@ -95,7 +97,7 @@ export async function getFeedPosts(currentUserId?: string): Promise<PostData[]> 
     }
 
     // 3. Fetch comments safely
-    let commentsMap = new Map<number, PostComment[]>();
+    let rawComments: any[] = [];
 
     try {
       const { data: commentsData } = await supabase
@@ -103,6 +105,7 @@ export async function getFeedPosts(currentUserId?: string): Promise<PostData[]> 
         .select(`
           id,
           post_id,
+          author_id,
           content,
           created_at,
           author:profiles(
@@ -116,28 +119,81 @@ export async function getFeedPosts(currentUserId?: string): Promise<PostData[]> 
         .in("post_id", postIds)
         .order("created_at", { ascending: true });
 
-      if (commentsData) {
-        commentsData.forEach((c: any) => {
-          const list = commentsMap.get(c.post_id) || [];
-          list.push({
-            id: c.id,
-            content: c.content,
-            created_at: c.created_at,
-            author: c.author || {
-              id: "anon",
-              first_name: "Chapter",
-              last_name: "Member",
-            },
-          });
-          commentsMap.set(c.post_id, list);
-        });
-      }
+      rawComments = commentsData ?? [];
     } catch {
       // post_comments table may be pending creation
     }
 
+    // 4. Resolve any authors hidden by `profiles` RLS via `public_author_profiles` (or `user_directory` fallback)
+    const missingAuthorIds = Array.from(
+      new Set([
+        ...rawPosts.filter((p) => !p.author && !p.profiles && p.author_id).map((p) => p.author_id),
+        ...rawComments.filter((c) => !c.author && c.author_id).map((c) => c.author_id),
+      ])
+    );
+
+    const dirAuthorMap = new Map<string, any>();
+    if (missingAuthorIds.length > 0) {
+      try {
+        const { data: pubRows, error: pubErr } = await supabase
+          .from("public_author_profiles")
+          .select("id, first_name, last_name, avatar_url, role_code, role_name")
+          .in("id", missingAuthorIds);
+
+        if (!pubErr && pubRows) {
+          for (const u of pubRows) {
+            dirAuthorMap.set(u.id, {
+              id: u.id,
+              first_name: u.first_name,
+              last_name: u.last_name,
+              avatar_url: u.avatar_url,
+              roles: u.role_code ? { code: u.role_code, name: u.role_name || u.role_code } : undefined,
+            });
+          }
+        } else if (currentUserId) {
+          const { data: dirRows } = await supabase
+            .from("user_directory")
+            .select("id, first_name, last_name, avatar_url, role_code")
+            .in("id", missingAuthorIds);
+
+          for (const u of dirRows ?? []) {
+            dirAuthorMap.set(u.id, {
+              id: u.id,
+              first_name: u.first_name,
+              last_name: u.last_name,
+              avatar_url: u.avatar_url,
+              roles: u.role_code ? { code: u.role_code, name: u.role_code } : undefined,
+            });
+          }
+        }
+      } catch {
+        // Ignore if author lookup views are unavailable
+      }
+    }
+
+    const commentsMap = new Map<number, PostComment[]>();
+    rawComments.forEach((c: any) => {
+      const list = commentsMap.get(c.post_id) || [];
+      const resolvedAuthor =
+        c.author ||
+        (c.author_id ? dirAuthorMap.get(c.author_id) : null) || {
+          id: c.author_id || "anon",
+          first_name: "Chapter",
+          last_name: "Member",
+        };
+      list.push({
+        id: c.id,
+        content: c.content,
+        created_at: c.created_at,
+        author: resolvedAuthor,
+      });
+      commentsMap.set(c.post_id, list);
+    });
+
     return rawPosts.map((p) => {
       const postComments = commentsMap.get(p.id) || [];
+      const resolvedAuthor =
+        p.author || p.profiles || (p.author_id ? dirAuthorMap.get(p.author_id) : undefined);
       return {
         id: p.id,
         title: p.title,
@@ -149,7 +205,7 @@ export async function getFeedPosts(currentUserId?: string): Promise<PostData[]> 
         is_pinned: p.is_pinned,
         published_at: p.published_at,
         created_at: p.created_at,
-        author: p.author || p.profiles,
+        author: resolvedAuthor,
         likes_count: likesMap.get(p.id) || 0,
         comments_count: postComments.length,
         has_liked: userLikedSet.has(p.id),

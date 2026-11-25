@@ -62,7 +62,7 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen w-full flex flex-col lg:flex-row bg-surface-page">
       {/* Brand Panel */}
-      <div className="hidden lg:flex w-[560px] hero-gradient p-[56px_64px] flex-col justify-between shrink-0 text-white select-none">
+      <div className="hidden lg:sticky lg:top-0 lg:flex lg:h-screen w-[560px] hero-gradient p-[56px_64px] flex-col justify-between shrink-0 text-white select-none overflow-y-auto">
         <Link href="/" className="flex items-center gap-3">
           <LogoMark size={42} />
           <div className="flex flex-col leading-none">
