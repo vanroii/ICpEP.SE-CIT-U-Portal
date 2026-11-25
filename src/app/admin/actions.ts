@@ -43,10 +43,11 @@ export async function adminUpdateSettingsAction(formData: FormData) {
     const entries = Array.from(formData.entries());
 
     for (const [key, value] of entries) {
-      if (typeof value === "string") {
-        await supabase
+      if (typeof value === "string" && !key.startsWith("$ACTION")) {
+        const { error } = await supabase
           .from("site_settings")
           .upsert({ key, value, updated_at: new Date().toISOString() });
+        if (error) return { error: error.message };
       }
     }
 

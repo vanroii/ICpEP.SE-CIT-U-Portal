@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Heart,
   MessageCircle,
@@ -12,8 +13,14 @@ import {
   Trash2,
   Check,
   Sparkles,
+  ChevronLeft,
+  ChevronRight,
+  Pencil,
 } from "lucide-react";
 import { toggleLikeAction, addCommentAction, deleteCommentAction } from "@/app/actions/postInteractions";
+import { deletePostAction } from "@/app/officer/actions";
+import { CreatePostModal } from "@/app/officer/CreatePostModal";
+import { parseMediaUrls } from "@/lib/media";
 
 export interface PostComment {
   id: number;
@@ -67,6 +74,7 @@ interface PostCardProps {
 }
 
 export function PostCard({ post, currentUser }: PostCardProps) {
+  const router = useRouter();
   const [likesCount, setLikesCount] = useState(post.likes_count ?? 0);
   const [isLiked, setIsLiked] = useState(post.has_liked ?? false);
   const [likeAnimating, setLikeAnimating] = useState(false);
@@ -78,6 +86,18 @@ export function PostCard({ post, currentUser }: PostCardProps) {
   const [commenting, setCommenting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [expandedBody, setExpandedBody] = useState(false);
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deletingPost, setDeletingPost] = useState(false);
+  const [deleted, setDeleted] = useState(false);
+
+  const canManagePost = Boolean(
+    currentUser && ["officer", "faculty", "admin"].includes(currentUser.role)
+  );
+
+  const mediaUrls = parseMediaUrls(post.cover_image_url);
 
   const authorName = post.author
     ? `${post.author.first_name || ""} ${post.author.last_name || ""}`.trim()
@@ -195,6 +215,21 @@ export function PostCard({ post, currentUser }: PostCardProps) {
 
   const isLongBody = post.body && post.body.length > 220;
 
+  const handleDeletePost = async () => {
+    setDeletingPost(true);
+    const res = await deletePostAction(post.id);
+    setDeletingPost(false);
+    if (res.error) {
+      alert(res.error);
+      setConfirmDelete(false);
+      return;
+    }
+    setDeleted(true);
+    router.refresh();
+  };
+
+  if (deleted) return null;
+
   return (
     <article className="bg-white border border-border-default rounded-[20px] overflow-hidden shadow-xs hover:shadow-sm transition-all duration-200">
       {/* Header */}
@@ -235,28 +270,148 @@ export function PostCard({ post, currentUser }: PostCardProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
           {post.is_pinned && (
             <span className="flex items-center gap-1 text-[11px] font-bold text-cyan-600 bg-cyan-50 px-2.5 py-1 rounded-full">
               <Pin className="w-3 h-3 fill-current" />
               Pinned
             </span>
           )}
+          {canManagePost && !confirmDelete && (
+            <>
+              <button
+                type="button"
+                onClick={() => setEditOpen(true)}
+                title="Edit post"
+                aria-label="Edit post"
+                className="p-1.5 rounded-lg text-text-500 hover:text-cyan-600 hover:bg-cyan-50 transition-colors cursor-pointer"
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                title="Delete post"
+                aria-label="Delete post"
+                className="p-1.5 rounded-lg text-text-500 hover:text-[#bf2626] hover:bg-[#fae6e6] transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </>
+          )}
+          {canManagePost && confirmDelete && (
+            <div className="flex items-center gap-1 bg-[#fae6e6] px-2 py-1 rounded-lg">
+              <button
+                type="button"
+                disabled={deletingPost}
+                onClick={handleDeletePost}
+                className="text-[11px] font-bold text-[#bf2626] hover:underline disabled:opacity-50 cursor-pointer"
+              >
+                {deletingPost ? "Deleting..." : "Confirm"}
+              </button>
+              <span className="text-[#d9b2b2]">|</span>
+              <button
+                type="button"
+                disabled={deletingPost}
+                onClick={() => setConfirmDelete(false)}
+                className="text-[11px] font-medium text-text-600 hover:underline cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Post Photo / Cover Media (Instagram Style) */}
-      {post.cover_image_url && (
+      {/* Post Photo / Cover Media (Instagram Style Single or Carousel) */}
+      {mediaUrls.length > 0 && (
         <div
           onDoubleClick={handleDoubleTap}
+          onTouchStart={(e) => setTouchStartX(e.touches[0].clientX)}
+          onTouchEnd={(e) => {
+            if (touchStartX === null || mediaUrls.length <= 1) return;
+            const dx = e.changedTouches[0].clientX - touchStartX;
+            if (dx < -40 && activeSlide < mediaUrls.length - 1) {
+              setActiveSlide((s) => s + 1);
+            } else if (dx > 40 && activeSlide > 0) {
+              setActiveSlide((s) => s - 1);
+            }
+            setTouchStartX(null);
+          }}
           className="relative w-full aspect-16/10 sm:aspect-16/9 bg-ink-900/5 overflow-hidden select-none cursor-pointer group"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={post.cover_image_url}
-            alt={post.title}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.01]"
-          />
+          {/* Sliding track */}
+          <div
+            className="flex w-full h-full transition-transform duration-300 ease-out"
+            style={{ transform: `translateX(-${activeSlide * 100}%)` }}
+          >
+            {mediaUrls.map((url, idx) => (
+              <div key={idx} className="w-full h-full shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={url}
+                  alt={`${post.title}${mediaUrls.length > 1 ? ` (${idx + 1}/${mediaUrls.length})` : ""}`}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Carousel Controls & Indicators */}
+          {mediaUrls.length > 1 && (
+            <>
+              <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/65 text-white text-[11px] font-bold backdrop-blur-xs">
+                {activeSlide + 1} / {mediaUrls.length}
+              </span>
+
+              {activeSlide > 0 && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveSlide((s) => Math.max(0, s - 1));
+                  }}
+                  aria-label="Previous photo"
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/55 hover:bg-black/75 text-white flex items-center justify-center transition-opacity sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+              )}
+
+              {activeSlide < mediaUrls.length - 1 && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveSlide((s) => Math.min(mediaUrls.length - 1, s + 1));
+                  }}
+                  aria-label="Next photo"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/55 hover:bg-black/75 text-white flex items-center justify-center transition-opacity sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              )}
+
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-xs">
+                {mediaUrls.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveSlide(idx);
+                    }}
+                    aria-label={`Go to photo ${idx + 1}`}
+                    className={`rounded-full transition-all cursor-pointer ${
+                      idx === activeSlide
+                        ? "w-2 h-2 bg-cyan-400"
+                        : "w-1.5 h-1.5 bg-white/65 hover:bg-white"
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
 
           {/* Double tap heart animation */}
           {showHeartOverlay && (
@@ -431,6 +586,23 @@ export function PostCard({ post, currentUser }: PostCardProps) {
           </form>
         </div>
       </div>
+      {editOpen && (
+        <CreatePostModal
+          hideTrigger
+          open={editOpen}
+          onClose={() => setEditOpen(false)}
+          initialPost={{
+            id: post.id,
+            title: post.title,
+            slug: post.slug,
+            post_type: post.post_type,
+            summary: post.summary,
+            body: post.body,
+            cover_image_url: post.cover_image_url,
+            is_pinned: post.is_pinned,
+          }}
+        />
+      )}
     </article>
   );
 }

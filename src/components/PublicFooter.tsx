@@ -4,76 +4,90 @@ import { LogoMark } from "./ui/Logo";
 
 export function PublicFooter() {
   return (
-    <footer className="w-full bg-ink-900 text-text-dark pt-[72px] pb-[48px]">
-      <div className="max-w-[1440px] mx-auto px-5 sm:px-12 lg:px-[120px] space-y-12">
-        {/* Footer Columns */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 lg:gap-16">
-          {/* Brand Column */}
-          <div className="md:col-span-8 space-y-4">
+    <footer className="w-full bg-ink-900 text-text-dark">
+      <div className="max-w-[1440px] mx-auto px-5 sm:px-12 lg:px-[120px] pt-14 pb-8">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-8">
+          <div className="lg:col-span-5 space-y-5">
             <div className="flex items-center gap-3">
-              <LogoMark size={42} />
-              <div className="flex flex-col leading-none">
-                <span className="text-[17px] font-bold text-white tracking-[-0.2px]">
-                  ICpEP.SE
-                </span>
-                <span className="text-[12px] font-medium text-text-mute mt-1">
-                  CIT-U Chapter
-                </span>
-              </div>
+              <LogoMark size={40} />
+              <span className="text-[20px] font-bold tracking-[-0.3px] text-white">
+                ICpEP.SE CIT-U Chapter
+              </span>
             </div>
-            <p className="text-[14px] leading-[22px] text-text-dark max-w-sm">
-              The official Computer Engineering student organization of Cebu
-              Institute of Technology – University.
+            <p className="max-w-[420px] text-[13px] leading-[22px] text-text-dark">
+              Institute of Computer Engineers of the Philippines — Student Edition, Cebu Institute
+              of Technology – University. Molding globally competitive, ethical, and innovative
+              Computer Engineers.
+            </p>
+            <p className="text-[12px] font-medium text-text-mute">
+              CPEPE361 / SD - H3 : Academic Year 2026-2027
             </p>
           </div>
 
-          {/* Organization */}
-          <div className="space-y-3.5 md:col-span-4 md:justify-self-end md:-translate-x-8">
-            <h4 className="text-[14px] font-semibold text-white">Organization</h4>
-            <ul className="space-y-3.5 text-[14px] text-text-dark">
+          <div className="lg:col-span-3 lg:justify-self-center">
+            <h4 className="text-[12px] font-bold tracking-[1px] text-white uppercase">
+              Quick Links
+            </h4>
+            <ul className="mt-5 space-y-3 text-[13px] text-text-dark">
               <li>
-                <Link href="/about" className="hover:text-white transition-colors">
-                  About us
+                <Link href="/" className="transition-colors hover:text-white">
+                  Home Portal
                 </Link>
               </li>
               <li>
-                <Link href="/about#officers" className="hover:text-white transition-colors">
-                  Officers
+                <Link href="/events" className="transition-colors hover:text-white">
+                  Upcoming Events
                 </Link>
               </li>
               <li>
-                <Link href="/#events" className="hover:text-white transition-colors">
-                  Events
+                <Link href="/news" className="transition-colors hover:text-white">
+                  News &amp; Updates
                 </Link>
               </li>
               <li>
-                <Link href="/about#contact" className="hover:text-white transition-colors">
-                  Contact
+                <Link href="/about" className="transition-colors hover:text-white">
+                  About &amp; Officers
                 </Link>
               </li>
             </ul>
           </div>
 
+          <div className="lg:col-span-4 lg:justify-self-end">
+            <h4 className="text-[12px] font-bold tracking-[1px] text-white uppercase">
+              Contact &amp; Campus
+            </h4>
+            <ul className="mt-5 space-y-3 text-[13px] text-text-dark">
+              <li>CEA Building, CIT-U Campus</li>
+              <li>N. Bacalso Ave, Cebu City</li>
+              <li>
+                <a href="mailto:icpep.se@cit.edu" className="transition-colors hover:text-white">
+                  icpep.se@cit.edu
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.facebook.com/cituicpep"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-cyan-500 transition-colors hover:text-cyan-400"
+                >
+                  Official Facebook Page
+                  <span aria-hidden="true">↗</span>
+                </a>
+              </li>
+            </ul>
+          </div>
         </div>
 
-        {/* Divider */}
-        <div className="w-full h-[1px] bg-ink-border" />
-
-        {/* Legal Row */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-[13px] text-text-mute">
+        <div className="mt-12 border-t border-ink-border pt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-[12px] text-text-mute">
           <p>© 2026 ICpEP.SE CIT-U Chapter. All rights reserved.</p>
-          <div className="flex items-center gap-4">
-            <Link href="/privacy" className="hover:text-white transition-colors">
-              Privacy
-            </Link>
-            <span>·</span>
-            <Link href="/terms" className="hover:text-white transition-colors">
-              Terms
-            </Link>
-          </div>
+          <p className="sm:text-right">
+            Cebu Institute of Technology - University
+            <span className="mx-2 text-text-mute/70">•</span>
+            Department of Computer Engineering
+          </p>
         </div>
       </div>
     </footer>
   );
 }
-

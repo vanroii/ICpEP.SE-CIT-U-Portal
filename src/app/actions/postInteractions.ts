@@ -136,6 +136,7 @@ export async function deleteCommentAction(commentId: number) {
     revalidatePath("/officer");
     revalidatePath("/faculty");
     revalidatePath("/student");
+    revalidatePath("/news");
     return { success: true };
   } catch (err: any) {
     return { error: err.message || "Failed to delete comment." };

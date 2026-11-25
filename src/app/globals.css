@@ -51,7 +51,7 @@
     border-color: #DEDBD8;
   }
   html {
-    overflow-x: hidden;
+    overflow-x: clip;
   }
   body {
     background-color: #F8F8F7;
@@ -60,13 +60,24 @@
     min-height: 100vh;
     margin: 0;
     padding: 0;
-    overflow-x: hidden;
+    overflow-x: clip;
   }
 }
 
 /* Hero gradient */
 .hero-gradient {
   background: linear-gradient(135deg, #1C1713 0%, #105570 100%);
+}
+
+.landing-continuation-gradient {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(16, 87, 112, 0.28) 0%,
+      rgba(16, 87, 112, 0.12) 28%,
+      rgba(255, 255, 255, 0) 58%
+    ),
+    #FFFFFF;
 }
 
 /* Profile cover gradient */

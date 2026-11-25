@@ -1,16 +1,18 @@
 "use client";
 
 import React, { Suspense, useActionState, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { login } from "./actions";
-import { LogoMark, LogoLarge } from "@/components/ui/Logo";
+import { LogoMark } from "@/components/ui/Logo";
 
 function LoginForm() {
   const [state, action, pending] = useActionState(login, undefined);
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "";
   const [keepSignedIn, setKeepSignedIn] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <div className="w-full max-w-[420px] space-y-5">
@@ -54,43 +56,52 @@ function LoginForm() {
 
         {/* Password */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="block text-[14px] font-semibold text-text-700">
-              Password
-            </label>
-            <Link
-              href="/forgot-password"
-              className="text-[13px] font-semibold text-cyan-600 hover:underline"
-            >
-              Forgot password?
-            </Link>
-          </div>
-          <input
-            name="password"
-            type="password"
-            required
-            placeholder="••••••••"
-            className="w-full h-[46px] px-4 rounded-[10px] bg-white border border-border-input text-[15px] text-ink-900 placeholder-text-400 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
-          />
-        </div>
-
-        {/* Keep me signed in */}
-        <div className="flex items-center gap-2.5 pt-0.5">
-          <input
-            type="checkbox"
-            id="keepSignedIn"
-            checked={keepSignedIn}
-            onChange={(e) => setKeepSignedIn(e.target.checked)}
-            className="w-[18px] h-[18px] rounded-[5px] border border-border-input text-cyan-500 focus:ring-cyan-500 cursor-pointer"
-          />
-          <label
-            htmlFor="keepSignedIn"
-            className="text-[13px] text-text-600 cursor-pointer select-none"
-          >
-            Keep me signed in
+          <label className="block text-[14px] font-semibold text-text-700">
+            Password
           </label>
+          <div className="relative">
+            <input
+              name="password"
+              type={showPassword ? "text" : "password"}
+              required
+              placeholder="••••••••"
+              className="w-full h-[46px] px-4 pr-12 rounded-[10px] bg-white border border-border-input text-[15px] text-ink-900 placeholder-text-400 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-text-500 transition-colors hover:text-ink-900"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-pressed={showPassword}
+            >
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
 
+        <div className="flex items-center justify-between pt-0.5">
+          <div className="flex items-center gap-2.5">
+            <input
+              type="checkbox"
+              id="keepSignedIn"
+              checked={keepSignedIn}
+              onChange={(e) => setKeepSignedIn(e.target.checked)}
+              className="w-[18px] h-[18px] rounded-[5px] border border-border-input text-cyan-500 focus:ring-cyan-500 cursor-pointer"
+            />
+            <label
+              htmlFor="keepSignedIn"
+              className="text-[13px] text-text-600 cursor-pointer select-none"
+            >
+              Keep me signed in
+            </label>
+          </div>
+          <Link
+            href="/forgot-password"
+            className="text-[13px] font-semibold text-cyan-600 hover:underline"
+          >
+            Forgot password?
+          </Link>
+        </div>
         {/* Primary Log in Button */}
         <button
           type="submit"
@@ -133,8 +144,8 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <div className="min-h-screen w-full flex flex-col lg:flex-row bg-surface-page">
-      {/* Brand Panel (620px, dark gradient, §4.3) */}
-      <div className="hidden lg:flex w-[620px] hero-gradient p-[56px_64px] flex-col justify-between shrink-0 text-white select-none">
+      {/* Brand Panel (560px, dark gradient, §4.3) */}
+      <div className="hidden lg:flex w-[560px] hero-gradient p-[56px_64px] flex-col shrink-0 text-white select-none">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3">
           <LogoMark size={42} />
@@ -148,10 +159,9 @@ export default function LoginPage() {
           </div>
         </Link>
 
-        {/* Brand Pitch with Logo/Large */}
-        <div className="space-y-6 max-w-[480px]">
-          <LogoLarge size={140} />
-
+        <div className="flex flex-1 items-center justify-center pt-12">
+          {/* Brand Pitch */}
+          <div className="max-w-[480px] space-y-6">
           <h2 className="text-[40px] leading-[48px] font-extrabold text-white tracking-[-0.8px]">
             Welcome back to ICpEP.SE CIT-U.
           </h2>
@@ -179,11 +189,7 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
-
-        {/* Bottom note */}
-        <p className="text-[14px] text-text-dark">
-          Visitors can browse public events and news without logging in.
-        </p>
+        </div>
       </div>
 
       {/* Form Panel (820px) */}
