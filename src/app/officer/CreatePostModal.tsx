@@ -71,17 +71,17 @@ export function CreatePostModal({ buttonLabel = "New Announcement" }: { buttonLa
           <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl space-y-4 my-8">
             <div className="flex items-center justify-between pb-3 border-b border-[#f0eeeb]">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-[#e3f6fc] text-[#0a7db0]">
+                <div className="p-2 rounded-xl bg-cyan-50 text-[#0a7db0]">
                   <Sparkles className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="font-bold text-base text-[#1b1613]">Create Official Post</h3>
-                  <p className="text-[11px] text-[#817B77]">Post to the chapter feed as Officer or Faculty</p>
+                  <p className="text-[11px] text-text-500">Post to the chapter feed as Officer or Faculty</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-[#8c8785] hover:text-[#1b1613] p-1 rounded-lg hover:bg-[#FAF9F8]"
+                className="text-[#8c8785] hover:text-[#1b1613] p-1 rounded-lg hover:bg-surface-50"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -161,15 +161,15 @@ export function CreatePostModal({ buttonLabel = "New Announcement" }: { buttonLa
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="px-3 py-2 rounded-lg border border-[#e0dedb] bg-[#FAF9F8] hover:bg-[#F2EFE9] text-xs font-semibold text-[#45403d] flex items-center gap-1.5 transition-colors shrink-0"
+                    className="px-3 py-2 rounded-lg border border-[#e0dedb] bg-surface-50 hover:bg-[#F2EFE9] text-xs font-semibold text-[#45403d] flex items-center gap-1.5 transition-colors shrink-0"
                   >
-                    <ImageIcon className="w-3.5 h-3.5 text-[#0087B5]" />
+                    <ImageIcon className="w-3.5 h-3.5 text-cyan-600" />
                     Upload
                   </button>
                 </div>
 
                 {imageUrl && (
-                  <div className="mt-2 relative rounded-xl overflow-hidden border border-[#DEDBD8] max-h-48 bg-black/5 flex items-center justify-center">
+                  <div className="mt-2 relative rounded-xl overflow-hidden border border-border-default max-h-48 bg-black/5 flex items-center justify-center">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={imageUrl}

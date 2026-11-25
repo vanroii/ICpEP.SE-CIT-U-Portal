@@ -83,7 +83,7 @@ export function EventRegisterButton({
         </p>
         <a
           href="/student"
-          className="inline-block mt-1 text-xs font-semibold text-[#0a7db0] underline hover:text-[#1ca7e0]"
+          className="inline-flex items-center gap-1.5 mt-1 px-3.5 py-2 rounded-xl bg-white border border-border-default text-xs font-semibold text-ink-900 hover:border-cyan-500 hover:bg-cyan-50/40 hover:text-cyan-600 shadow-2xs transition-all"
         >
           Go to Student Dashboard →
         </a>

@@ -74,7 +74,7 @@ export default async function LandingHomePage() {
   const displayEvents = events.length > 0 ? events : fallbackEvents;
 
   return (
-    <div className="w-full bg-[#F8F8F7] flex flex-col">
+    <div className="w-full bg-surface-page flex flex-col">
       {/* 1. Public Navbar (1440x78) */}
       <PublicNavbar />
 
@@ -85,9 +85,9 @@ export default async function LandingHomePage() {
             {/* Hero Copy (580px wide) */}
             <div className="flex-1 max-w-[580px] space-y-6">
               {/* Eyebrow Pill */}
-              <div className="inline-flex items-center gap-2 px-[14px] py-[7px] bg-[#26343B] rounded-full">
-                <span className="w-2 h-2 rounded-full bg-[#19A7D5] shrink-0" />
-                <span className="text-[13px] font-medium text-[#D1CECB] leading-tight">
+              <div className="inline-flex items-center gap-2 px-3.5 py-[7px] bg-[#26343B] rounded-full">
+                <span className="w-2 h-2 rounded-full bg-cyan-500 shrink-0" />
+                <span className="text-[13px] font-medium text-text-dark leading-tight">
                   Institute of Computer Engineers of the Philippines — Student Edition
                 </span>
               </div>
@@ -98,7 +98,7 @@ export default async function LandingHomePage() {
               </h1>
 
               {/* Subheading */}
-              <p className="text-[16px] sm:text-[18px] leading-[28px] text-[#D1CECB]">
+              <p className="text-[16px] sm:text-[18px] leading-[28px] text-text-dark">
                 Join the official student organization for Computer Engineering at Cebu
                 Institute of Technology – University. Workshops, competitions, and a
                 community that has your back.
@@ -108,7 +108,7 @@ export default async function LandingHomePage() {
               <div className="flex flex-wrap items-center gap-3.5 pt-2">
                 <Link
                   href="/register"
-                  className="h-[43px] px-[22px] flex items-center justify-center rounded-[8px] bg-[#19A7D5] hover:bg-[#1695bf] active:bg-[#1383a8] text-[#12191C] text-[14px] font-semibold transition-colors"
+                  className="h-[43px] px-[22px] flex items-center justify-center rounded-[8px] bg-cyan-500 hover:bg-[#1695bf] active:bg-[#1383a8] text-on-brand text-[14px] font-semibold transition-colors"
                 >
                   Register now
                 </Link>
@@ -123,7 +123,7 @@ export default async function LandingHomePage() {
 
             {/* Hero image placeholder (488x420, bg #26343B bd #315261 r24) */}
             <div className="w-full max-w-[488px] h-[360px] sm:h-[420px] rounded-[24px] bg-[#26343B] border border-[#315261] flex items-center justify-center shadow-lg relative overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-tr from-[#19A7D5]/10 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/10 to-transparent pointer-events-none" />
               <LogoLarge size={160} />
             </div>
           </div>
@@ -133,10 +133,10 @@ export default async function LandingHomePage() {
         <section className="w-full bg-white px-5 sm:px-12 lg:px-[120px] py-16 sm:py-[96px]">
           <div className="max-w-[1200px] mx-auto space-y-12">
             <div className="max-w-[640px] space-y-3">
-              <p className="text-[13px] font-bold tracking-[1.2px] text-[#0087B5] uppercase">
+              <p className="text-[13px] font-bold tracking-[1.2px] text-cyan-600 uppercase">
                 WHAT WE DO
               </p>
-              <h2 className="text-[32px] sm:text-[38px] leading-[46px] font-bold text-[#1C1713] tracking-[-0.6px]">
+              <h2 className="text-[32px] sm:text-[38px] leading-[46px] font-bold text-ink-900 tracking-[-0.6px]">
                 Everything a CpE student needs, in one organization.
               </h2>
             </div>
@@ -147,15 +147,15 @@ export default async function LandingHomePage() {
                 return (
                   <div
                     key={card.title}
-                    className="bg-white border border-[#DEDBD8] rounded-[16px] p-[28px_28px_30px_28px] space-y-4"
+                    className="bg-white border border-border-default rounded-2xl p-[28px_28px_30px_28px] space-y-4"
                   >
-                    <div className="w-[52px] h-[52px] rounded-[14px] bg-[#E3F6FC] flex items-center justify-center text-[#0087B5]">
+                    <div className="w-[52px] h-[52px] rounded-[14px] bg-cyan-50 flex items-center justify-center text-cyan-600">
                       <Icon className="w-[26px] h-[26px]" />
                     </div>
-                    <h3 className="text-[20px] leading-[28px] font-semibold text-[#1C1713]">
+                    <h3 className="text-[20px] leading-[28px] font-semibold text-ink-900">
                       {card.title}
                     </h3>
-                    <p className="text-[15px] leading-[24px] text-[#817B77]">
+                    <p className="text-[15px] leading-[24px] text-text-500">
                       {card.desc}
                     </p>
                   </div>
@@ -166,22 +166,23 @@ export default async function LandingHomePage() {
         </section>
 
         {/* 5. Events / Upcoming (1440x601, px-[120px] py-[96px], bg #F8F8F7) */}
-        <section id="events" className="w-full scroll-mt-[78px] bg-[#F8F8F7] px-5 sm:px-12 lg:px-[120px] py-16 sm:py-[96px]">
+        <section id="events" className="w-full scroll-mt-[78px] bg-surface-page px-5 sm:px-12 lg:px-[120px] py-16 sm:py-[96px]">
           <div className="max-w-[1200px] mx-auto space-y-10">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <div className="space-y-3">
-                <p className="text-[13px] font-bold tracking-[1.2px] text-[#0087B5] uppercase">
+                <p className="text-[13px] font-bold tracking-[1.2px] text-cyan-600 uppercase">
                   UPCOMING
                 </p>
-                <h2 className="text-[32px] sm:text-[38px] leading-[46px] font-bold text-[#1C1713] tracking-[-0.6px]">
+                <h2 className="text-[32px] sm:text-[38px] leading-[46px] font-bold text-ink-900 tracking-[-0.6px]">
                   Events you will not want to miss
                 </h2>
               </div>
               <Link
                 href="/events"
-                className="text-[15px] font-semibold text-[#0087B5] hover:underline whitespace-nowrap"
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-border-default text-xs font-semibold text-ink-900 hover:border-cyan-500 hover:bg-cyan-50/40 hover:text-cyan-600 shadow-2xs transition-all whitespace-nowrap"
               >
-                View all events →
+                View all events
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
@@ -197,7 +198,7 @@ export default async function LandingHomePage() {
                     <Link
                       key={evt.slug || evt.title}
                       href={`/events/${evt.slug}`}
-                      className="bg-white border border-[#DEDBD8] rounded-[14px] overflow-hidden flex flex-col hover:border-[#19A7D5] transition-colors group"
+                      className="bg-white border border-border-default rounded-[14px] overflow-hidden flex flex-col hover:border-cyan-500 transition-colors group"
                     >
                       {/* Event photo placeholder */}
                       <div className="h-[176px] w-full event-photo-gradient flex items-center justify-between p-4 text-white">
@@ -210,7 +211,7 @@ export default async function LandingHomePage() {
                           </span>
                         </div>
                         {evt.visibility === "members_only" && (
-                          <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#FEF3C7] text-[#B45309]">
+                          <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-status-post-officer-bg text-status-post-officer">
                             Members Only
                           </span>
                         )}
@@ -218,14 +219,14 @@ export default async function LandingHomePage() {
                       {/* Body */}
                       <div className="p-[18px_20px_22px_20px] space-y-2 flex-1 flex flex-col justify-between">
                         <div>
-                          <p className="text-[12px] font-bold tracking-[0.6px] text-[#0087B5] uppercase">
+                          <p className="text-[12px] font-bold tracking-[0.6px] text-cyan-600 uppercase">
                             {dateStr} · {evt.venue || "CIT-U"}
                           </p>
-                          <h4 className="text-[18px] leading-[26px] font-semibold text-[#1C1713] mt-1 group-hover:text-[#0087B5] transition-colors">
+                          <h4 className="text-[18px] leading-[26px] font-semibold text-ink-900 mt-1 group-hover:text-cyan-600 transition-colors">
                             {evt.title}
                           </h4>
                         </div>
-                        <p className="text-[14px] leading-[20px] text-[#817B77] pt-1">
+                        <p className="text-[14px] leading-[20px] text-text-500 pt-1">
                           {evt.participant_count || 0} registered · {evt.capacity ? `Capacity ${evt.capacity}` : "Open admission"}
                         </p>
                       </div>
@@ -234,11 +235,11 @@ export default async function LandingHomePage() {
                 })}
               </div>
             ) : (
-              <div className="bg-white border border-[#DEDBD8] rounded-[14px] p-12 text-center space-y-3">
-                <p className="text-[16px] font-semibold text-[#1C1713]">
+              <div className="bg-white border border-border-default rounded-[14px] p-12 text-center space-y-3">
+                <p className="text-[16px] font-semibold text-ink-900">
                   No upcoming events scheduled
                 </p>
-                <p className="text-[14px] text-[#817B77] max-w-md mx-auto">
+                <p className="text-[14px] text-text-500 max-w-md mx-auto">
                   Stay tuned! New chapter activities, workshops, and general assemblies will appear here once announced.
                 </p>
               </div>
@@ -253,13 +254,13 @@ export default async function LandingHomePage() {
               <h3 className="text-[26px] sm:text-[32px] leading-[40px] font-bold text-white tracking-[-0.4px]">
                 Register and join the ICpEP portal.
               </h3>
-              <p className="text-[15px] sm:text-[16px] leading-[24px] text-[#D1CECB]">
+              <p className="text-[15px] sm:text-[16px] leading-[24px] text-text-dark">
                 Link your student ID to unlock member privileges, announcements, and events.
               </p>
             </div>
             <Link
               href="/register"
-              className="h-[43px] px-[22px] flex items-center justify-center rounded-[8px] bg-[#19A7D5] hover:bg-[#1695bf] text-[#12191C] text-[14px] font-semibold transition-colors shrink-0"
+              className="h-[43px] px-[22px] flex items-center justify-center rounded-[8px] bg-cyan-500 hover:bg-[#1695bf] text-on-brand text-[14px] font-semibold transition-colors shrink-0"
             >
               Register
             </Link>

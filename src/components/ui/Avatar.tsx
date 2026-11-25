@@ -30,7 +30,7 @@ export function Avatar({
 
   const sizeClasses = {
     xs: "w-[28px] h-[28px] text-[11px] font-bold",
-    sm: "w-[32px] h-[32px] text-[12px] font-bold",
+    sm: "w-[32px] h-8 text-[12px] font-bold",
     md: "w-[38px] h-[38px] text-[15px] font-bold",
     lg: "w-[44px] h-[44px] text-[16px] font-bold",
     xl: "w-[136px] h-[136px] text-[54px] font-bold",

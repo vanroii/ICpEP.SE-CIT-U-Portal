@@ -163,7 +163,12 @@ export function PostCard({ post, currentUser }: PostCardProps) {
       alert(res.error);
     } else if (res.comment) {
       // Replace with real comment
-      setComments((prev) => prev.map((c) => (c.id === tempId ? (res.comment as PostComment) : c)));
+      const raw = res.comment as any;
+      const normalized: PostComment = {
+        ...raw,
+        author: Array.isArray(raw.author) ? raw.author[0] : raw.author,
+      };
+      setComments((prev) => prev.map((c) => (c.id === tempId ? normalized : c)));
     }
   };
 
@@ -191,17 +196,17 @@ export function PostCard({ post, currentUser }: PostCardProps) {
   const isLongBody = post.body && post.body.length > 220;
 
   return (
-    <article className="bg-white border border-[#DEDBD8] rounded-[20px] overflow-hidden shadow-xs hover:shadow-sm transition-all duration-200">
+    <article className="bg-white border border-border-default rounded-[20px] overflow-hidden shadow-xs hover:shadow-sm transition-all duration-200">
       {/* Header */}
       <div className="p-4 sm:p-5 flex items-center justify-between gap-3 border-b border-[#F0EEEB]">
         <div className="flex items-center gap-3 min-w-0">
           <div className="relative">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#0087B5] to-[#19A7D5] text-white flex items-center justify-center font-bold text-sm ring-2 ring-[#E3F6FC] shrink-0">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-600 to-cyan-500 text-white flex items-center justify-center font-bold text-sm ring-2 ring-cyan-50 shrink-0">
               {authorInitial}
             </div>
             <div
               className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white ${
-                authorRoleCode === "faculty" ? "bg-[#B45309]" : "bg-[#0087B5]"
+                authorRoleCode === "faculty" ? "bg-status-post-officer" : "bg-cyan-600"
               }`}
               title={authorRoleLabel}
             />
@@ -209,20 +214,20 @@ export function PostCard({ post, currentUser }: PostCardProps) {
 
           <div className="min-w-0 leading-tight">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-[14px] text-[#1C1713] truncate hover:text-[#0087B5] transition-colors">
+              <span className="font-bold text-[14px] text-ink-900 truncate hover:text-cyan-600 transition-colors">
                 {authorName}
               </span>
               <span
                 className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
                   authorRoleCode === "faculty"
-                    ? "bg-[#FEF3C7] text-[#92400E]"
-                    : "bg-[#E3F6FC] text-[#0087B5]"
+                    ? "bg-status-post-officer-bg text-[#92400E]"
+                    : "bg-cyan-50 text-cyan-600"
                 }`}
               >
                 {authorRoleLabel}
               </span>
             </div>
-            <div className="flex items-center gap-2 text-xs text-[#817B77] mt-0.5">
+            <div className="flex items-center gap-2 text-xs text-text-500 mt-0.5">
               <span>{formattedDate}</span>
               <span>•</span>
               <span className="capitalize">{post.post_type}</span>
@@ -232,7 +237,7 @@ export function PostCard({ post, currentUser }: PostCardProps) {
 
         <div className="flex items-center gap-2 shrink-0">
           {post.is_pinned && (
-            <span className="flex items-center gap-1 text-[11px] font-bold text-[#0087B5] bg-[#E3F6FC] px-2.5 py-1 rounded-full">
+            <span className="flex items-center gap-1 text-[11px] font-bold text-cyan-600 bg-cyan-50 px-2.5 py-1 rounded-full">
               <Pin className="w-3 h-3 fill-current" />
               Pinned
             </span>
@@ -244,7 +249,7 @@ export function PostCard({ post, currentUser }: PostCardProps) {
       {post.cover_image_url && (
         <div
           onDoubleClick={handleDoubleTap}
-          className="relative w-full aspect-16/10 sm:aspect-16/9 bg-[#1C1713]/5 overflow-hidden select-none cursor-pointer group"
+          className="relative w-full aspect-16/10 sm:aspect-16/9 bg-ink-900/5 overflow-hidden select-none cursor-pointer group"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -265,8 +270,8 @@ export function PostCard({ post, currentUser }: PostCardProps) {
       {/* Main Content Area */}
       <div className="p-4 sm:p-5 space-y-3">
         {/* Title */}
-        <h3 className="text-[17px] font-bold text-[#1C1713] leading-snug">
-          <Link href={`/news/${post.slug}`} className="hover:text-[#0087B5] transition-colors">
+        <h3 className="text-[17px] font-bold text-ink-900 leading-snug">
+          <Link href={`/news/${post.slug}`} className="hover:text-cyan-600 transition-colors">
             {post.title}
           </Link>
         </h3>
@@ -279,7 +284,7 @@ export function PostCard({ post, currentUser }: PostCardProps) {
               <button
                 type="button"
                 onClick={() => setExpandedBody(true)}
-                className="text-[#0087B5] font-semibold text-xs ml-1 hover:underline inline-block"
+                className="text-cyan-600 font-semibold text-xs ml-1 hover:underline inline-block"
               >
                 more
               </button>
@@ -291,7 +296,7 @@ export function PostCard({ post, currentUser }: PostCardProps) {
                 <button
                   type="button"
                   onClick={() => setExpandedBody(false)}
-                  className="text-[#817B77] font-semibold text-xs ml-1 hover:underline inline-block"
+                  className="text-text-500 font-semibold text-xs ml-1 hover:underline inline-block"
                 >
                   less
                 </button>
@@ -308,7 +313,7 @@ export function PostCard({ post, currentUser }: PostCardProps) {
               type="button"
               onClick={handleLike}
               className={`flex items-center gap-1.5 transition-transform active:scale-90 ${
-                isLiked ? "text-[#E11D48]" : "text-[#514B47] hover:text-[#E11D48]"
+                isLiked ? "text-[#E11D48]" : "text-text-600 hover:text-[#E11D48]"
               }`}
               title={isLiked ? "Unlike" : "Like"}
             >
@@ -317,7 +322,7 @@ export function PostCard({ post, currentUser }: PostCardProps) {
                   isLiked ? "fill-[#E11D48] text-[#E11D48]" : ""
                 } ${likeAnimating ? "scale-125" : "scale-100"}`}
               />
-              <span className="text-xs font-bold text-[#1C1713]">
+              <span className="text-xs font-bold text-ink-900">
                 {likesCount} {likesCount === 1 ? "like" : "likes"}
               </span>
             </button>
@@ -326,11 +331,11 @@ export function PostCard({ post, currentUser }: PostCardProps) {
             <button
               type="button"
               onClick={() => setShowAllComments((prev) => !prev)}
-              className="flex items-center gap-1.5 text-[#514B47] hover:text-[#0087B5] transition-colors"
+              className="flex items-center gap-1.5 text-text-600 hover:text-cyan-600 transition-colors"
               title="Comment"
             >
               <MessageCircle className="w-5 h-5" />
-              <span className="text-xs font-bold text-[#1C1713]">
+              <span className="text-xs font-bold text-ink-900">
                 {comments.length} {comments.length === 1 ? "comment" : "comments"}
               </span>
             </button>
@@ -340,13 +345,13 @@ export function PostCard({ post, currentUser }: PostCardProps) {
           <button
             type="button"
             onClick={handleShare}
-            className="flex items-center gap-1 text-xs font-semibold text-[#817B77] hover:text-[#0087B5] transition-colors p-1 rounded-lg"
+            className="flex items-center gap-1 text-xs font-semibold text-text-500 hover:text-cyan-600 transition-colors p-1 rounded-lg"
             title="Share post"
           >
             {copied ? (
               <>
-                <Check className="w-4 h-4 text-[#15803D]" />
-                <span className="text-[#15803D] text-[11px] font-bold">Link copied</span>
+                <Check className="w-4 h-4 text-status-success" />
+                <span className="text-status-success text-[11px] font-bold">Link copied</span>
               </>
             ) : (
               <>
@@ -363,7 +368,7 @@ export function PostCard({ post, currentUser }: PostCardProps) {
             <button
               type="button"
               onClick={() => setShowAllComments(true)}
-              className="text-xs font-medium text-[#817B77] hover:text-[#1C1713] transition-colors"
+              className="text-xs font-medium text-text-500 hover:text-ink-900 transition-colors"
             >
               View all {comments.length} comments
             </button>
@@ -381,14 +386,14 @@ export function PostCard({ post, currentUser }: PostCardProps) {
               return (
                 <div key={c.id} className="flex items-start justify-between gap-2 text-xs group">
                   <div className="flex-1 leading-snug">
-                    <span className="font-bold text-[#1C1713] mr-1.5">{cName}</span>
+                    <span className="font-bold text-ink-900 mr-1.5">{cName}</span>
                     <span className="text-[#423C38]">{c.content}</span>
                   </div>
                   {(isOwner || isStaff) && (
                     <button
                       type="button"
                       onClick={() => handleDeleteComment(c.id)}
-                      className="text-[#AAA4A0] hover:text-[#bf2626] opacity-0 group-hover:opacity-100 transition-opacity p-0.5"
+                      className="text-text-mute hover:text-[#bf2626] opacity-0 group-hover:opacity-100 transition-opacity p-0.5"
                       title="Delete comment"
                     >
                       <Trash2 className="w-3 h-3" />
@@ -401,7 +406,7 @@ export function PostCard({ post, currentUser }: PostCardProps) {
 
           {/* Comment Input */}
           <form onSubmit={handleAddComment} className="pt-2 flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-[#E5E0DC] text-[#1C1713] flex items-center justify-center font-bold text-[11px] shrink-0">
+            <div className="w-7 h-7 rounded-full bg-[#E5E0DC] text-ink-900 flex items-center justify-center font-bold text-[11px] shrink-0">
               {currentUser?.name?.charAt(0).toUpperCase() || "U"}
             </div>
             <div className="flex-1 relative flex items-center">
@@ -411,13 +416,13 @@ export function PostCard({ post, currentUser }: PostCardProps) {
                 disabled={!currentUser || commenting}
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
-                className="w-full h-8 pl-3 pr-10 text-xs bg-[#FAF9F8] border border-[#DEDBD8] rounded-full focus:bg-white focus:border-[#0087B5] outline-none transition-colors"
+                className="w-full h-8 pl-3 pr-10 text-xs bg-surface-50 border border-border-default rounded-full focus:bg-white focus:border-cyan-600 outline-none transition-colors"
               />
               {commentText.trim() && (
                 <button
                   type="submit"
                   disabled={commenting}
-                  className="absolute right-2 text-xs font-bold text-[#0087B5] hover:text-[#006f94] transition-colors"
+                  className="absolute right-2 text-xs font-bold text-cyan-600 hover:text-[#006f94] transition-colors"
                 >
                   Post
                 </button>

@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { LogoMark } from "./ui/Logo";
 import { createClient } from "@/lib/supabase/client";
+import { QuickPopoverPanel, type QuickPanelType } from "./QuickPopoverPanel";
 import {
   Home,
   Calendar,
@@ -124,20 +125,20 @@ function SidebarNav({
             onClick={onNavigate}
             title={collapsed ? item.label : undefined}
             aria-label={collapsed ? item.label : undefined}
-            className={`h-[42px] rounded-[10px] flex items-center transition-colors ${
-              collapsed ? "px-[14px] gap-3 lg:justify-center lg:px-0 lg:gap-0" : "px-[14px] gap-3"
+            className={`h-10.5 rounded-[10px] flex items-center transition-colors ${
+              collapsed ? "px-3.5 gap-3 lg:justify-center lg:px-0 lg:gap-0" : "px-3.5 gap-3"
             } ${
               active
-                ? "bg-[#E3F6FC] text-[#0087B5]"
-                : "text-[#D1CECB] hover:bg-[#2C2622] hover:text-white"
+                ? "bg-cyan-50 text-cyan-600"
+                : "text-text-dark hover:bg-ink-800 hover:text-white"
             }`}
           >
             <Icon
-              className={`w-5 h-5 shrink-0 ${active ? "text-[#0087B5]" : "text-[#D1CECB]"}`}
+              className={`w-5 h-5 shrink-0 ${active ? "text-cyan-600" : "text-text-dark"}`}
             />
             <span
               className={`text-[14px] truncate ${collapsed ? "lg:sr-only" : ""} ${
-                active ? "font-semibold text-[#0087B5]" : "font-medium"
+                active ? "font-semibold text-cyan-600" : "font-medium"
               }`}
             >
               {item.label}
@@ -162,6 +163,8 @@ export function PortalShell({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [unreadNotifications, setUnreadNotifications] = useState(initialUnreadNotifications ?? 0);
   const [unreadMessages, setUnreadMessages] = useState(initialUnreadMessages ?? 0);
+  const [openPanel, setOpenPanel] = useState<QuickPanelType>(null);
+  const quickPanelContainerRef = useRef<HTMLDivElement | null>(null);
   const pathname = usePathname();
   const navItems = getNavItems(role);
 
@@ -214,8 +217,13 @@ export function PortalShell({
     };
 
     fetchCounts();
+    const handleCountsUpdated = () => {
+      fetchCounts();
+    };
+    window.addEventListener("icpep:counts-updated", handleCountsUpdated);
     return () => {
       active = false;
+      window.removeEventListener("icpep:counts-updated", handleCountsUpdated);
     };
   }, [pathname]);
 
@@ -241,6 +249,34 @@ export function PortalShell({
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [sidebarOpen]);
+
+  // Close floating quick panel on outside click, Escape, or route change
+  useEffect(() => {
+    setOpenPanel(null);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!openPanel) return;
+    const handleOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest("[data-quick-panel-toggle='true']")) return;
+      if (
+        quickPanelContainerRef.current &&
+        !quickPanelContainerRef.current.contains(e.target as Node)
+      ) {
+        setOpenPanel(null);
+      }
+    };
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenPanel(null);
+    };
+    document.addEventListener("mousedown", handleOutside);
+    window.addEventListener("keydown", handleEsc);
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+      window.removeEventListener("keydown", handleEsc);
+    };
+  }, [openPanel]);
 
   const displayName =
     userName ||
@@ -273,7 +309,7 @@ export function PortalShell({
           {!sidebarCollapsed && (
             <div className="flex flex-col leading-none text-left">
               <span className="text-[16px] font-bold text-white tracking-[-0.2px]">ICpEP.SE</span>
-              <span className="text-[11px] font-medium text-[#AAA4A0] mt-0.5">
+              <span className="text-[11px] font-medium text-text-mute mt-0.5">
                 {role === "admin" ? "Admin console" : "CIT-U Chapter"}
               </span>
             </div>
@@ -284,7 +320,7 @@ export function PortalShell({
           <LogoMark size={40} />
           <div className="flex flex-col leading-none">
             <span className="text-[16px] font-bold text-white tracking-[-0.2px]">ICpEP.SE</span>
-            <span className="text-[11px] font-medium text-[#AAA4A0] mt-0.5">
+            <span className="text-[11px] font-medium text-text-mute mt-0.5">
               {role === "admin" ? "Admin console" : "CIT-U Chapter"}
             </span>
           </div>
@@ -297,11 +333,11 @@ export function PortalShell({
               {navItems.map((item) => (
                 <div
                   key={item.label}
-                  className={`h-[42px] px-[14px] rounded-[10px] flex items-center gap-3 text-[#D1CECB] ${
+                  className={`h-10.5 px-3.5 rounded-[10px] flex items-center gap-3 text-text-dark ${
                     sidebarCollapsed ? "lg:justify-center lg:px-0 lg:gap-0" : ""
                   }`}
                 >
-                  <item.icon className="w-5 h-5 shrink-0 text-[#D1CECB]" />
+                  <item.icon className="w-5 h-5 shrink-0 text-text-dark" />
                   <span className={`text-[14px] font-medium ${sidebarCollapsed ? "lg:sr-only" : ""}`}>
                     {item.label}
                   </span>
@@ -320,25 +356,25 @@ export function PortalShell({
       </div>
 
       {/* Footer */}
-      <div className={`space-y-2 pt-4 border-t border-[#39322E] ${sidebarCollapsed ? "lg:space-y-3" : ""}`}>
+      <div className={`space-y-2 pt-4 border-t border-ink-border ${sidebarCollapsed ? "lg:space-y-3" : ""}`}>
         <Link
           href="/settings"
           onClick={closeSidebar}
           title={sidebarCollapsed ? "Account settings" : undefined}
           aria-label={sidebarCollapsed ? "Account settings" : undefined}
-          className={`w-full bg-[#2C2622] hover:bg-[#342e2a] transition-colors rounded-[12px] flex items-center gap-3 ${
+          className={`w-full bg-ink-800 hover:bg-[#342e2a] transition-colors rounded-xl flex items-center gap-3 ${
             sidebarCollapsed ? "p-3 lg:justify-center lg:p-2" : "p-3"
           }`}
         >
-          <div className={`w-9 h-9 rounded-full bg-[#19A7D5] text-[#12191C] flex items-center justify-center font-bold text-[14px] shrink-0 ${sidebarCollapsed ? "lg:hidden" : ""}`}>
+          <div className={`w-9 h-9 rounded-full bg-cyan-500 text-on-brand flex items-center justify-center font-bold text-[14px] shrink-0 ${sidebarCollapsed ? "lg:hidden" : ""}`}>
             {initial}
           </div>
           <div className={`flex-1 min-w-0 leading-tight ${sidebarCollapsed ? "lg:hidden" : ""}`}>
             <p className="text-[13px] font-semibold text-white truncate">{displayName}</p>
-            <p className="text-[11px] text-[#AAA4A0] truncate">{sub}</p>
+            <p className="text-[11px] text-text-mute truncate">{sub}</p>
           </div>
-          <Settings className={`w-4 h-4 text-[#AAA4A0] shrink-0 ${sidebarCollapsed ? "lg:hidden" : ""}`} />
-          {sidebarCollapsed && <Settings className="hidden lg:block w-4 h-4 text-[#AAA4A0] shrink-0" />}
+          <Settings className={`w-4 h-4 text-text-mute shrink-0 ${sidebarCollapsed ? "lg:hidden" : ""}`} />
+          {sidebarCollapsed && <Settings className="hidden lg:block w-4 h-4 text-text-mute shrink-0" />}
         </Link>
 
         <form action="/auth/signout" method="post">
@@ -346,7 +382,7 @@ export function PortalShell({
             type="submit"
             title={sidebarCollapsed ? "Sign Out" : undefined}
             aria-label="Sign Out"
-            className="w-full h-[40px] rounded-[10px] bg-[#2C2622] hover:bg-[#3A3330] text-[#D1CECB] hover:text-white text-[13px] font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
+            className="w-full h-[40px] rounded-[10px] bg-ink-800 hover:bg-ink-700 text-text-dark hover:text-white text-[13px] font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
           >
             <LogOut className="w-4 h-4 shrink-0" />
             <span className={sidebarCollapsed ? "lg:hidden" : ""}>Sign Out</span>
@@ -357,9 +393,9 @@ export function PortalShell({
   );
 
   return (
-    <div className="min-h-screen bg-[#F8F8F7] flex">
+    <div className="min-h-screen bg-surface-page flex">
       {/* Mobile top bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 h-14 bg-[#1C1713] border-b border-[#39322E] flex items-center justify-between px-4">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 h-14 bg-ink-900 border-b border-ink-border flex items-center justify-between px-4">
         <button
           type="button"
           onClick={() => setSidebarOpen((open) => !open)}
@@ -374,32 +410,42 @@ export function PortalShell({
 
         {/* Mobile Top-Right Actions: Inbox & Notifications + Menu */}
         <div className="flex items-center gap-1 sm:gap-1.5">
-          <Link
-            href="/inbox"
-            title="Inbox"
-            aria-label="Inbox"
-            className={`relative p-2 rounded-lg transition-colors ${
-              isInboxActive
-                ? "text-[#19A7D5] bg-white/10"
-                : "text-[#D1CECB] hover:text-white hover:bg-[#2C2622]"
+          <button
+            type="button"
+            data-quick-panel-toggle="true"
+            onClick={() =>
+              setOpenPanel((p) => (p === "messages" ? null : "messages"))
+            }
+            title="Messages"
+            aria-label="Messages"
+            className={`relative p-2 rounded-lg transition-colors cursor-pointer ${
+              openPanel === "messages" || isInboxActive
+                ? "text-cyan-500 bg-white/10"
+                : "text-text-dark hover:text-white hover:bg-ink-800"
             }`}
           >
             <Mail className="w-5 h-5" />
             {unreadMessages > 0 && (
-              <span className="absolute top-1 right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#19A7D5] px-1 text-[10px] font-bold text-[#1C1713]">
+              <span className="absolute top-1 right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-cyan-500 px-1 text-[10px] font-bold text-ink-900">
                 {unreadMessages > 99 ? "99+" : unreadMessages}
               </span>
             )}
-          </Link>
+          </button>
 
-          <Link
-            href="/notifications"
+          <button
+            type="button"
+            data-quick-panel-toggle="true"
+            onClick={() =>
+              setOpenPanel((p) =>
+                p === "notifications" ? null : "notifications"
+              )
+            }
             title="Notifications"
             aria-label="Notifications"
-            className={`relative p-2 rounded-lg transition-colors ${
-              isNotifsActive
-                ? "text-[#19A7D5] bg-white/10"
-                : "text-[#D1CECB] hover:text-white hover:bg-[#2C2622]"
+            className={`relative p-2 rounded-lg transition-colors cursor-pointer ${
+              openPanel === "notifications" || isNotifsActive
+                ? "text-cyan-500 bg-white/10"
+                : "text-text-dark hover:text-white hover:bg-ink-800"
             }`}
           >
             <Bell className="w-5 h-5" />
@@ -408,14 +454,14 @@ export function PortalShell({
                 {unreadNotifications > 99 ? "99+" : unreadNotifications}
               </span>
             )}
-          </Link>
+          </button>
 
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             aria-label="Toggle navigation menu"
             aria-expanded={sidebarOpen}
             aria-controls="portal-sidebar"
-            className="w-10 h-10 flex items-center justify-center text-white rounded-[8px] hover:bg-[#2C2622] transition-colors"
+            className="w-10 h-10 flex items-center justify-center text-white rounded-[8px] hover:bg-ink-800 transition-colors"
           >
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -440,7 +486,7 @@ export function PortalShell({
           if ((event.target as HTMLElement).closest("a, button, input, select, textarea, [role='button']")) return;
           setSidebarCollapsed((collapsed) => !collapsed);
         }}
-        className={`fixed left-0 top-0 z-40 h-screen bg-[#1C1713] border-r border-[#39322E]
+        className={`fixed left-0 top-0 z-40 h-screen bg-ink-900 border-r border-ink-border
           flex flex-col justify-between p-5
           overflow-y-auto
           transition-[transform,width] duration-300 ease-in-out motion-reduce:transition-none
@@ -459,39 +505,49 @@ export function PortalShell({
         }`}
       >
         {/* Desktop Sticky Top Bar: Compact quick-actions header with tight, natural spacing */}
-        <header className="hidden lg:flex sticky top-0 z-30 h-12 items-center justify-end px-5 sm:px-6 lg:px-10 bg-[#F8F8F7]/90 backdrop-blur-md">
+        <header className="hidden lg:flex sticky top-0 z-30 h-12 items-center justify-end px-5 sm:px-6 lg:px-10 bg-surface-page/90 backdrop-blur-md">
           <aside
             aria-label="Quick actions"
-            className="flex items-center gap-1 bg-white/95 backdrop-blur-md p-1 rounded-full border border-[#DEDBD8] shadow-xs hover:shadow-sm transition-shadow"
+            className="flex items-center gap-1 bg-white/95 backdrop-blur-md p-1 rounded-full border border-border-default shadow-xs hover:shadow-sm transition-shadow"
           >
-            <Link
-              href="/inbox"
-              title="Inbox"
-              aria-label="Inbox"
-              className={`relative p-1.5 rounded-full transition-colors ${
-                isInboxActive
-                  ? "bg-[#E3F6FC] text-[#0087B5]"
-                  : "text-[#544E49] hover:text-[#0087B5] hover:bg-[#F2EFE9]"
+            <button
+              type="button"
+              data-quick-panel-toggle="true"
+              onClick={() =>
+                setOpenPanel((p) => (p === "messages" ? null : "messages"))
+              }
+              title="Messages"
+              aria-label="Messages"
+              className={`relative p-1.5 rounded-full transition-colors cursor-pointer ${
+                openPanel === "messages" || isInboxActive
+                  ? "bg-cyan-50 text-cyan-600"
+                  : "text-[#544E49] hover:text-cyan-600 hover:bg-[#F2EFE9]"
               }`}
             >
               <Mail className="w-5 h-5" />
               {unreadMessages > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#19A7D5] px-1 text-[10px] font-bold text-[#1C1713] ring-2 ring-white">
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-cyan-500 px-1 text-[10px] font-bold text-ink-900 ring-2 ring-white">
                   {unreadMessages > 99 ? "99+" : unreadMessages}
                 </span>
               )}
-            </Link>
+            </button>
 
             <div className="w-[1px] h-4 bg-[#E5E0DC]" />
 
-            <Link
-              href="/notifications"
+            <button
+              type="button"
+              data-quick-panel-toggle="true"
+              onClick={() =>
+                setOpenPanel((p) =>
+                  p === "notifications" ? null : "notifications"
+                )
+              }
               title="Notifications"
               aria-label="Notifications"
-              className={`relative p-1.5 rounded-full transition-colors ${
-                isNotifsActive
-                  ? "bg-[#E3F6FC] text-[#0087B5]"
-                  : "text-[#544E49] hover:text-[#0087B5] hover:bg-[#F2EFE9]"
+              className={`relative p-1.5 rounded-full transition-colors cursor-pointer ${
+                openPanel === "notifications" || isNotifsActive
+                  ? "bg-cyan-50 text-cyan-600"
+                  : "text-[#544E49] hover:text-cyan-600 hover:bg-[#F2EFE9]"
               }`}
             >
               <Bell className="w-5 h-5" />
@@ -500,12 +556,20 @@ export function PortalShell({
                   {unreadNotifications > 99 ? "99+" : unreadNotifications}
                 </span>
               )}
-            </Link>
+            </button>
           </aside>
         </header>
 
+        {/* Floating Quick Popover Tab (Messages / Notifications) */}
+        <div ref={quickPanelContainerRef}>
+          <QuickPopoverPanel
+            openPanel={openPanel}
+            onClose={() => setOpenPanel(null)}
+          />
+        </div>
+
         {/* Main page content */}
-        <main className="flex-1 min-w-0 bg-[#F8F8F7] p-5 pt-[72px] sm:p-6 sm:pt-[72px] lg:p-10 lg:pt-3 overflow-x-hidden">
+        <main className="flex-1 min-w-0 bg-surface-page p-5 pt-[72px] sm:p-6 sm:pt-[72px] lg:p-10 lg:pt-3 overflow-x-hidden">
           {children}
         </main>
       </div>

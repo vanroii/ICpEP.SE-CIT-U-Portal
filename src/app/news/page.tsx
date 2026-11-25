@@ -107,10 +107,10 @@ export default async function NewsPage({
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1.5">
-          <h1 className="text-[30px] leading-[38px] font-bold text-[#1C1713] tracking-[-0.5px]">
+          <h1 className="text-[30px] leading-[38px] font-bold text-ink-900 tracking-[-0.5px]">
             Announcements & News
           </h1>
-          <p className="text-[15px] text-[#817B77]">
+          <p className="text-[15px] text-text-500">
             Official circulars, academic notices, and chapter news.
           </p>
         </div>
@@ -118,12 +118,12 @@ export default async function NewsPage({
         <div className="flex items-center gap-3">
           <form method="get" className="relative w-[260px]">
             <input type="hidden" name="category" value={categoryFilter} />
-            <Search className="w-4 h-4 text-[#928C88] absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-text-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               name="q"
               defaultValue={search}
               placeholder="Search news..."
-              className="w-full h-[42px] pl-9 pr-3 bg-white border border-[#C9C5C2] rounded-[10px] text-[14px] text-[#1C1713] placeholder-[#928C88] outline-none focus:border-[#19A7D5]"
+              className="w-full h-10.5 pl-9 pr-3 bg-white border border-border-input rounded-[10px] text-[14px] text-ink-900 placeholder-text-400 outline-none focus:border-cyan-500"
             />
           </form>
 
@@ -135,40 +135,40 @@ export default async function NewsPage({
       <div className="flex items-center gap-2.5 flex-wrap">
         <Link
           href={`/news${search ? `?q=${encodeURIComponent(search)}` : ""}`}
-          className={`h-[32px] px-[14px] rounded-full text-[13px] font-semibold transition-colors flex items-center ${
+          className={`h-8 px-3.5 rounded-full text-[13px] font-semibold transition-colors flex items-center ${
             categoryFilter === "all"
-              ? "bg-[#19A7D5] text-[#12191C]"
-              : "bg-white border border-[#DEDBD8] text-[#817B77] hover:text-[#1C1713]"
+              ? "bg-cyan-500 text-on-brand"
+              : "bg-white border border-border-default text-text-500 hover:text-ink-900"
           }`}
         >
           All Circulars ({sourcePosts.length})
         </Link>
         <Link
           href={`/news?category=announcement${search ? `&q=${encodeURIComponent(search)}` : ""}`}
-          className={`h-[32px] px-[14px] rounded-full text-[13px] font-semibold transition-colors flex items-center ${
+          className={`h-8 px-3.5 rounded-full text-[13px] font-semibold transition-colors flex items-center ${
             categoryFilter === "announcement"
-              ? "bg-[#19A7D5] text-[#12191C]"
-              : "bg-white border border-[#DEDBD8] text-[#817B77] hover:text-[#1C1713]"
+              ? "bg-cyan-500 text-on-brand"
+              : "bg-white border border-border-default text-text-500 hover:text-ink-900"
           }`}
         >
           Announcements
         </Link>
         <Link
           href={`/news?category=news${search ? `&q=${encodeURIComponent(search)}` : ""}`}
-          className={`h-[32px] px-[14px] rounded-full text-[13px] font-semibold transition-colors flex items-center ${
+          className={`h-8 px-3.5 rounded-full text-[13px] font-semibold transition-colors flex items-center ${
             categoryFilter === "news"
-              ? "bg-[#19A7D5] text-[#12191C]"
-              : "bg-white border border-[#DEDBD8] text-[#817B77] hover:text-[#1C1713]"
+              ? "bg-cyan-500 text-on-brand"
+              : "bg-white border border-border-default text-text-500 hover:text-ink-900"
           }`}
         >
           News & Features
         </Link>
         <Link
           href={`/news?category=update${search ? `&q=${encodeURIComponent(search)}` : ""}`}
-          className={`h-[32px] px-[14px] rounded-full text-[13px] font-semibold transition-colors flex items-center ${
+          className={`h-8 px-3.5 rounded-full text-[13px] font-semibold transition-colors flex items-center ${
             categoryFilter === "update"
-              ? "bg-[#19A7D5] text-[#12191C]"
-              : "bg-white border border-[#DEDBD8] text-[#817B77] hover:text-[#1C1713]"
+              ? "bg-cyan-500 text-on-brand"
+              : "bg-white border border-border-default text-text-500 hover:text-ink-900"
           }`}
         >
           Operational Updates
@@ -181,20 +181,20 @@ export default async function NewsPage({
           {filteredPosts.map((post) => (
             <article
               key={post.slug || post.id}
-              className="bg-white border border-[#DEDBD8] rounded-[16px] p-6 space-y-3 shadow-xs hover:border-[#19A7D5] transition-colors"
+              className="bg-white border border-border-default rounded-2xl p-6 space-y-3 shadow-xs hover:border-cyan-500 transition-colors"
             >
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-[#E3F6FC] text-[#0087B5]">
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-cyan-50 text-cyan-600">
                     {post.post_type}
                   </span>
                   {post.is_pinned && (
-                    <span className="flex items-center gap-1 text-[11px] font-semibold text-[#9A6C00] bg-[#FEF3C7] px-2 py-0.5 rounded-full">
+                    <span className="flex items-center gap-1 text-[11px] font-semibold text-status-warning bg-status-post-officer-bg px-2 py-0.5 rounded-full">
                       <Pin className="w-3 h-3" /> Pinned
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-1.5 text-[#817B77]">
+                <div className="flex items-center gap-1.5 text-text-500">
                   <Clock className="w-3.5 h-3.5" />
                   <span>
                     {post.published_at
@@ -208,39 +208,39 @@ export default async function NewsPage({
                 </div>
               </div>
 
-              <h2 className="text-[20px] font-bold text-[#1C1713] leading-snug">
-                <Link href={`/news/${post.slug}`} className="hover:text-[#0087B5] transition-colors">
+              <h2 className="text-[20px] font-bold text-ink-900 leading-snug">
+                <Link href={`/news/${post.slug}`} className="hover:text-cyan-600 transition-colors">
                   {post.title}
                 </Link>
               </h2>
 
               {post.summary && (
-                <p className="text-[14px] text-[#514B47] leading-relaxed">
+                <p className="text-[14px] text-text-600 leading-relaxed">
                   {post.summary}
                 </p>
               )}
 
-              <div className="pt-3 border-t border-[#EEECEA] flex items-center justify-between text-xs">
-                <span className="text-[#817B77] flex items-center gap-1">
+              <div className="pt-3 border-t border-divider flex items-center justify-between text-xs">
+                <span className="text-text-500 flex items-center gap-1">
                   <User className="w-3.5 h-3.5" />
                   By {post.profiles ? `${post.profiles.first_name} ${post.profiles.last_name}` : "Chapter Officers"}
                 </span>
 
                 <Link
                   href={`/news/${post.slug}`}
-                  className="font-semibold text-[#0087B5] hover:underline flex items-center gap-1"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-border-default text-xs font-semibold text-ink-900 hover:border-cyan-500 hover:bg-cyan-50/40 hover:text-cyan-600 shadow-2xs transition-all"
                 >
-                  Read full circular <ArrowRight className="w-3 h-3" />
+                  Read full circular <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
             </article>
           ))}
         </div>
       ) : (
-        <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-12 text-center space-y-3">
-          <BookOpen className="w-8 h-8 text-[#817B77] mx-auto opacity-50" />
-          <h3 className="text-[17px] font-bold text-[#1C1713]">No posts found</h3>
-          <p className="text-[14px] text-[#817B77] max-w-sm mx-auto">
+        <div className="bg-white border border-border-default rounded-2xl p-12 text-center space-y-3">
+          <BookOpen className="w-8 h-8 text-text-500 mx-auto opacity-50" />
+          <h3 className="text-[17px] font-bold text-ink-900">No posts found</h3>
+          <p className="text-[14px] text-text-500 max-w-sm mx-auto">
             Try adjusting your search query or selecting a different category.
           </p>
         </div>
@@ -262,7 +262,7 @@ export default async function NewsPage({
   }
 
   return (
-    <div className="w-full bg-[#F8F8F7] min-h-screen flex flex-col justify-between">
+    <div className="w-full bg-surface-page min-h-screen flex flex-col justify-between">
       <PublicNavbar />
       <main className="max-w-[1440px] mx-auto px-5 sm:px-12 lg:px-[120px] py-12 w-full">
         {content}

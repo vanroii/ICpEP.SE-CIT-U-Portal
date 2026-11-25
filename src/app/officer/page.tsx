@@ -150,14 +150,14 @@ export default async function OfficerPortalPage({
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1.5">
-            <h1 className="text-[30px] leading-[38px] font-bold text-[#1C1713] tracking-[-0.5px]">
+            <h1 className="text-[30px] leading-[38px] font-bold text-ink-900 tracking-[-0.5px]">
               {isAnalyticsTab
                 ? "Analytics and Reports"
                 : isControlPanelTab
                 ? "Officer Control Panel"
                 : "Chapter Community Feed"}
             </h1>
-            <p className="text-[15px] text-[#817B77]">
+            <p className="text-[15px] text-text-500">
               {isAnalyticsTab
                 ? "Overview of chapter membership, event participation, and system activity."
                 : isControlPanelTab
@@ -168,13 +168,13 @@ export default async function OfficerPortalPage({
 
           <div className="flex flex-wrap items-center gap-3">
             {/* Tab switchers */}
-            <div className="flex items-center gap-1.5 bg-[#FAF9F8] border border-[#DEDBD8] p-1 rounded-[10px]">
+            <div className="flex items-center gap-1.5 bg-surface-50 border border-border-default p-1 rounded-[10px]">
               <Link
                 href="/officer"
-                className={`h-[32px] px-3 rounded-[7px] font-semibold text-xs flex items-center gap-1.5 transition-colors ${
+                className={`h-8 px-3 rounded-[7px] font-semibold text-xs flex items-center gap-1.5 transition-colors ${
                   isFeedTab
-                    ? "bg-[#19A7D5] text-[#12191C] shadow-xs"
-                    : "text-[#817B77] hover:text-[#1C1713] hover:bg-white"
+                    ? "bg-cyan-500 text-on-brand shadow-xs"
+                    : "text-text-500 hover:text-ink-900 hover:bg-white"
                 }`}
               >
                 <Sparkles className="w-3.5 h-3.5" />
@@ -182,10 +182,10 @@ export default async function OfficerPortalPage({
               </Link>
               <Link
                 href="/officer?tab=control-panel"
-                className={`h-[32px] px-3 rounded-[7px] font-semibold text-xs flex items-center gap-1.5 transition-colors ${
+                className={`h-8 px-3 rounded-[7px] font-semibold text-xs flex items-center gap-1.5 transition-colors ${
                   isControlPanelTab
-                    ? "bg-[#19A7D5] text-[#12191C] shadow-xs"
-                    : "text-[#817B77] hover:text-[#1C1713] hover:bg-white"
+                    ? "bg-cyan-500 text-on-brand shadow-xs"
+                    : "text-text-500 hover:text-ink-900 hover:bg-white"
                 }`}
               >
                 <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -193,10 +193,10 @@ export default async function OfficerPortalPage({
               </Link>
               <Link
                 href="/officer?tab=analytics"
-                className={`h-[32px] px-3 rounded-[7px] font-semibold text-xs flex items-center gap-1.5 transition-colors ${
+                className={`h-8 px-3 rounded-[7px] font-semibold text-xs flex items-center gap-1.5 transition-colors ${
                   isAnalyticsTab
-                    ? "bg-[#19A7D5] text-[#12191C] shadow-xs"
-                    : "text-[#817B77] hover:text-[#1C1713] hover:bg-white"
+                    ? "bg-cyan-500 text-on-brand shadow-xs"
+                    : "text-text-500 hover:text-ink-900 hover:bg-white"
                 }`}
               >
                 <BarChart2 className="w-3.5 h-3.5" />
@@ -230,14 +230,14 @@ export default async function OfficerPortalPage({
             <RoleMasterlistManager mode="members" />
 
             {/* Pending Verifications Queue */}
-            <div className="bg-white border border-[#DEDBD8] rounded-[16px] overflow-hidden shadow-xs space-y-4 p-6">
+            <div className="bg-white border border-border-default rounded-2xl overflow-hidden shadow-xs space-y-4 p-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <h2 className="text-[18px] font-bold text-[#1C1713] flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-[#B45309]" />
+                  <h2 className="text-[18px] font-bold text-ink-900 flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-status-post-officer" />
                     Membership Verification Queue ({pendingApplications.length})
                   </h2>
-                  <p className="text-xs text-[#817B77]">
+                  <p className="text-xs text-text-500">
                     Review student credentials, assign official membership numbers, and grant certified status.
                   </p>
                 </div>
@@ -247,7 +247,7 @@ export default async function OfficerPortalPage({
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="border-b border-[#EEECEA] text-[#817B77] bg-[#FAF9F8]">
+                      <tr className="border-b border-divider text-text-500 bg-surface-50">
                         <th className="py-3 px-4 font-bold">APPLICANT</th>
                         <th className="py-3 px-4 font-bold">STUDENT ID</th>
                         <th className="py-3 px-4 font-bold">PROGRAM &amp; YEAR</th>
@@ -256,28 +256,28 @@ export default async function OfficerPortalPage({
                         <th className="py-3 px-4 font-bold text-right">ACTION</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#EEECEA]">
+                    <tbody className="divide-y divide-divider">
                       {pendingApplications.map((app) => {
                         const applicant = app.applicant;
                         if (!applicant) return null;
                         return (
-                          <tr key={app.id} className="hover:bg-[#FAF9F8] transition-colors">
+                          <tr key={app.id} className="hover:bg-surface-50 transition-colors">
                             <td className="py-3 px-4">
-                              <p className="font-bold text-[#1C1713]">
+                              <p className="font-bold text-ink-900">
                                 {applicant.first_name} {applicant.last_name}
                               </p>
-                              <p className="text-[11px] text-[#817B77]">{applicant.email}</p>
+                              <p className="text-[11px] text-text-500">{applicant.email}</p>
                             </td>
-                            <td className="py-3 px-4 font-mono font-medium text-[#1C1713]">
+                            <td className="py-3 px-4 font-mono font-medium text-ink-900">
                               {applicant.student_number || "—"}
                             </td>
-                            <td className="py-3 px-4 text-[#514B47]">
+                            <td className="py-3 px-4 text-text-600">
                               {applicant.program} · Yr {applicant.year_level || 1}
                             </td>
-                            <td className="py-3 px-4 font-mono text-[#0087B5]">
+                            <td className="py-3 px-4 font-mono text-cyan-600">
                               {app.claimed_membership_no || "New Member"}
                             </td>
-                            <td className="py-3 px-4 text-[#817B77]">
+                            <td className="py-3 px-4 text-text-500">
                               {new Date(app.submitted_at).toLocaleDateString("en-US", {
                                 month: "short",
                                 day: "numeric",
@@ -293,46 +293,49 @@ export default async function OfficerPortalPage({
                   </table>
                 </div>
               ) : (
-                <div className="py-8 text-center text-xs text-[#817B77] space-y-1">
-                  <CheckCircle2 className="w-6 h-6 text-[#15803D] mx-auto opacity-80" />
-                  <p className="font-bold text-[#1C1713]">All caught up!</p>
+                <div className="py-8 text-center text-xs text-text-500 space-y-1">
+                  <CheckCircle2 className="w-6 h-6 text-status-success mx-auto opacity-80" />
+                  <p className="font-bold text-ink-900">All caught up!</p>
                   <p>There are no pending membership applications waiting for review.</p>
                 </div>
               )}
             </div>
 
             {/* Chapter Events Summary */}
-            <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-6 space-y-4 shadow-xs">
-              <div className="flex items-center justify-between pb-2 border-b border-[#EEECEA]">
-                <h3 className="text-[16px] font-bold text-[#1C1713] flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-[#0087B5]" />
+            <div className="bg-white border border-border-default rounded-2xl p-6 space-y-4 shadow-xs">
+              <div className="flex items-center justify-between pb-2 border-b border-divider">
+                <h3 className="text-[16px] font-bold text-ink-900 flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-cyan-600" />
                   Chapter Events &amp; Operations
                 </h3>
-                <Link href="/events" className="text-xs font-semibold text-[#0087B5] hover:underline">
+                <Link
+                  href="/events"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-border-default text-xs font-semibold text-ink-900 hover:border-cyan-500 hover:bg-cyan-50/40 hover:text-cyan-600 shadow-2xs transition-all"
+                >
                   View all →
                 </Link>
               </div>
 
               {recentEvents.length > 0 ? (
-                <div className="divide-y divide-[#EEECEA]">
+                <div className="divide-y divide-divider">
                   {recentEvents.map((evt) => (
                     <div key={evt.id} className="py-3 flex items-center justify-between gap-4">
                       <div className="min-w-0">
-                        <h4 className="font-bold text-[14px] text-[#1C1713] truncate">
-                          <Link href={`/events/${evt.slug}`} className="hover:text-[#0087B5]">
+                        <h4 className="font-bold text-[14px] text-ink-900 truncate">
+                          <Link href={`/events/${evt.slug}`} className="hover:text-cyan-600">
                             {evt.title}
                           </Link>
                         </h4>
-                        <p className="text-xs text-[#817B77]">
+                        <p className="text-xs text-text-500">
                           {new Date(evt.start_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })} · {evt.venue || "CIT-U"}
                         </p>
                       </div>
 
                       <div className="text-right shrink-0">
-                        <span className="text-xs font-bold text-[#0087B5]">
+                        <span className="text-xs font-bold text-cyan-600">
                           {evt.participant_count || 0} registered
                         </span>
-                        <p className="text-[11px] text-[#817B77]">
+                        <p className="text-[11px] text-text-500">
                           {evt.capacity ? `Limit ${evt.capacity}` : "Unlimited"}
                         </p>
                       </div>
@@ -340,7 +343,7 @@ export default async function OfficerPortalPage({
                   ))}
                 </div>
               ) : (
-                <div className="py-8 text-center text-xs text-[#817B77]">
+                <div className="py-8 text-center text-xs text-text-500">
                   No chapter events created yet.
                 </div>
               )}
@@ -355,48 +358,48 @@ export default async function OfficerPortalPage({
           <div className="space-y-8">
             {/* 4 Core Stat Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-5 space-y-1.5 shadow-xs">
-                <div className="flex items-center justify-between text-[#0087B5]">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#817B77]">
+              <div className="bg-white border border-border-default rounded-2xl p-5 space-y-1.5 shadow-xs">
+                <div className="flex items-center justify-between text-cyan-600">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-text-500">
                     Active Members
                   </span>
                   <Award className="w-4 h-4" />
                 </div>
-                <p className="text-2xl font-bold text-[#1C1713]">{membersCount}</p>
-                <p className="text-[12px] text-[#817B77]">AY 2026–2027 Verified</p>
+                <p className="text-2xl font-bold text-ink-900">{membersCount}</p>
+                <p className="text-[12px] text-text-500">AY 2026–2027 Verified</p>
               </div>
 
-              <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-5 space-y-1.5 shadow-xs">
-                <div className="flex items-center justify-between text-[#B45309]">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#817B77]">
+              <div className="bg-white border border-border-default rounded-2xl p-5 space-y-1.5 shadow-xs">
+                <div className="flex items-center justify-between text-status-post-officer">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-text-500">
                     Pending Verifications
                   </span>
                   <Clock className="w-4 h-4" />
                 </div>
-                <p className="text-2xl font-bold text-[#1C1713]">{pendingAppsCount}</p>
-                <p className="text-[12px] text-[#817B77]">Requires officer review</p>
+                <p className="text-2xl font-bold text-ink-900">{pendingAppsCount}</p>
+                <p className="text-[12px] text-text-500">Requires officer review</p>
               </div>
 
-              <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-5 space-y-1.5 shadow-xs">
-                <div className="flex items-center justify-between text-[#0087B5]">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#817B77]">
+              <div className="bg-white border border-border-default rounded-2xl p-5 space-y-1.5 shadow-xs">
+                <div className="flex items-center justify-between text-cyan-600">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-text-500">
                     Published Events
                   </span>
                   <Calendar className="w-4 h-4" />
                 </div>
-                <p className="text-2xl font-bold text-[#1C1713]">{eventsCount}</p>
-                <p className="text-[12px] text-[#817B77]">Assemblies &amp; workshops</p>
+                <p className="text-2xl font-bold text-ink-900">{eventsCount}</p>
+                <p className="text-[12px] text-text-500">Assemblies &amp; workshops</p>
               </div>
 
-              <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-5 space-y-1.5 shadow-xs">
-                <div className="flex items-center justify-between text-[#15803D]">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#817B77]">
+              <div className="bg-white border border-border-default rounded-2xl p-5 space-y-1.5 shadow-xs">
+                <div className="flex items-center justify-between text-status-success">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-text-500">
                     System Status
                   </span>
                   <Shield className="w-4 h-4" />
                 </div>
-                <p className="text-2xl font-bold text-[#1C1713]">Online</p>
-                <p className="text-[12px] text-[#817B77]">RLS Security Guarded</p>
+                <p className="text-2xl font-bold text-ink-900">Online</p>
+                <p className="text-[12px] text-text-500">RLS Security Guarded</p>
               </div>
             </div>
 
@@ -405,13 +408,16 @@ export default async function OfficerPortalPage({
               {/* Left Column: Participation & Membership counts */}
               <div className="lg:col-span-7 space-y-6">
                 {/* Event Attendance & Participation */}
-                <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-6 space-y-4 shadow-xs">
-                  <div className="flex items-center justify-between pb-2 border-b border-[#EEECEA]">
-                    <h3 className="text-[16px] font-bold text-[#1C1713] flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-[#0087B5]" />
+                <div className="bg-white border border-border-default rounded-2xl p-6 space-y-4 shadow-xs">
+                  <div className="flex items-center justify-between pb-2 border-b border-divider">
+                    <h3 className="text-[16px] font-bold text-ink-900 flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-cyan-600" />
                       Event Attendance &amp; Participation Ratios
                     </h3>
-                    <Link href="/events" className="text-xs font-semibold text-[#0087B5] hover:underline">
+                    <Link
+                      href="/events"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-border-default text-xs font-semibold text-ink-900 hover:border-cyan-500 hover:bg-cyan-50/40 hover:text-cyan-600 shadow-2xs transition-all"
+                    >
                       View all →
                     </Link>
                   </div>
@@ -420,18 +426,18 @@ export default async function OfficerPortalPage({
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-xs border-collapse">
                         <thead>
-                          <tr className="border-b border-[#EEECEA] text-[#817B77] bg-[#FAF9F8]">
+                          <tr className="border-b border-divider text-text-500 bg-surface-50">
                             <th className="py-2.5 px-3 font-bold">EVENT TITLE</th>
                             <th className="py-2.5 px-3 font-bold">DATE</th>
                             <th className="py-2.5 px-3 font-bold">REGISTRATIONS</th>
                             <th className="py-2.5 px-3 font-bold">CAPACITY</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-[#EEECEA]">
+                        <tbody className="divide-y divide-divider">
                           {participationReports.map((r) => (
-                            <tr key={r.event_id} className="hover:bg-[#FAF9F8] transition-colors">
-                              <td className="py-3 px-3 font-semibold text-[#1C1713]">{r.title}</td>
-                              <td className="py-3 px-3 text-[#817B77]">
+                            <tr key={r.event_id} className="hover:bg-surface-50 transition-colors">
+                              <td className="py-3 px-3 font-semibold text-ink-900">{r.title}</td>
+                              <td className="py-3 px-3 text-text-500">
                                 {r.start_at
                                   ? new Date(r.start_at).toLocaleDateString("en-US", {
                                       month: "short",
@@ -439,8 +445,8 @@ export default async function OfficerPortalPage({
                                     })
                                   : "—"}
                               </td>
-                              <td className="py-3 px-3 font-bold text-[#0087B5]">{r.registered}</td>
-                              <td className="py-3 px-3 text-[#817B77]">
+                              <td className="py-3 px-3 font-bold text-cyan-600">{r.registered}</td>
+                              <td className="py-3 px-3 text-text-500">
                                 {r.capacity ? r.capacity : "Unlimited"}
                               </td>
                             </tr>
@@ -449,16 +455,16 @@ export default async function OfficerPortalPage({
                       </table>
                     </div>
                   ) : (
-                    <div className="py-8 text-center text-xs text-[#817B77]">
+                    <div className="py-8 text-center text-xs text-text-500">
                       No event participation data available.
                     </div>
                   )}
                 </div>
 
                 {/* Membership Enrollment by School Year */}
-                <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-6 space-y-4 shadow-xs">
-                  <h3 className="text-[16px] font-bold text-[#1C1713] flex items-center gap-2 pb-2 border-b border-[#EEECEA]">
-                    <Users className="w-4 h-4 text-[#0087B5]" />
+                <div className="bg-white border border-border-default rounded-2xl p-6 space-y-4 shadow-xs">
+                  <h3 className="text-[16px] font-bold text-ink-900 flex items-center gap-2 pb-2 border-b border-divider">
+                    <Users className="w-4 h-4 text-cyan-600" />
                     Membership Enrollment by School Year
                   </h3>
 
@@ -467,20 +473,20 @@ export default async function OfficerPortalPage({
                       {membershipReports.map((r, i) => (
                         <div
                           key={i}
-                          className="flex items-center justify-between py-2 border-b border-[#EEECEA] last:border-0"
+                          className="flex items-center justify-between py-2 border-b border-divider last:border-0"
                         >
-                          <span className="text-[#1C1713] font-medium">
+                          <span className="text-ink-900 font-medium">
                             {r.school_year} ({r.status})
                           </span>
-                          <span className="font-bold text-[#0087B5]">{r.total} members</span>
+                          <span className="font-bold text-cyan-600">{r.total} members</span>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="space-y-2 text-xs text-[#817B77]">
-                      <div className="flex justify-between py-2 border-b border-[#EEECEA]">
+                    <div className="space-y-2 text-xs text-text-500">
+                      <div className="flex justify-between py-2 border-b border-divider">
                         <span>AY 2026–2027 (Active)</span>
-                        <span className="font-bold text-[#0087B5]">{membersCount} verified</span>
+                        <span className="font-bold text-cyan-600">{membersCount} verified</span>
                       </div>
                     </div>
                   )}
@@ -488,10 +494,10 @@ export default async function OfficerPortalPage({
               </div>
 
               {/* Right Column: Activity Logs */}
-              <div className="lg:col-span-5 bg-white border border-[#DEDBD8] rounded-[16px] p-6 space-y-4 shadow-xs">
-                <div className="flex items-center justify-between pb-2 border-b border-[#EEECEA]">
-                  <h3 className="text-[16px] font-bold text-[#1C1713] flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-[#0087B5]" />
+              <div className="lg:col-span-5 bg-white border border-border-default rounded-2xl p-6 space-y-4 shadow-xs">
+                <div className="flex items-center justify-between pb-2 border-b border-divider">
+                  <h3 className="text-[16px] font-bold text-ink-900 flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-cyan-600" />
                     Recent System Activity
                   </h3>
                 </div>
@@ -499,9 +505,9 @@ export default async function OfficerPortalPage({
                 {activityLogs.length > 0 ? (
                   <div className="space-y-3">
                     {activityLogs.map((log) => (
-                      <div key={log.id} className="text-xs space-y-0.5 pb-2 border-b border-[#EEECEA] last:border-0">
-                        <div className="flex items-center justify-between text-[#817B77]">
-                          <span className="font-semibold text-[#1C1713]">{log.actor || "Officer"}</span>
+                      <div key={log.id} className="text-xs space-y-0.5 pb-2 border-b border-divider last:border-0">
+                        <div className="flex items-center justify-between text-text-500">
+                          <span className="font-semibold text-ink-900">{log.actor || "Officer"}</span>
                           <span>
                             {new Date(log.created_at).toLocaleTimeString("en-US", {
                               hour: "numeric",
@@ -509,12 +515,12 @@ export default async function OfficerPortalPage({
                             })}
                           </span>
                         </div>
-                        <p className="text-[#514B47] font-mono text-[11px]">{log.action}</p>
+                        <p className="text-text-600 font-mono text-[11px]">{log.action}</p>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="py-8 text-center text-xs text-[#817B77]">
+                  <div className="py-8 text-center text-xs text-text-500">
                     No recent activity logged.
                   </div>
                 )}

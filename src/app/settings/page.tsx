@@ -53,10 +53,10 @@ export default async function AccountSettingsPage() {
       <div className="space-y-7 w-full">
         {/* Header */}
         <div className="space-y-1.5">
-          <h1 className="text-[30px] leading-[38px] font-bold text-[#1C1713] tracking-[-0.5px]">
+          <h1 className="text-[30px] leading-[38px] font-bold text-ink-900 tracking-[-0.5px]">
             Account Settings
           </h1>
-          <p className="text-[15px] text-[#817B77]">
+          <p className="text-[15px] text-text-500">
             Manage your personal profile information, security credentials, and preferences.
           </p>
         </div>
@@ -65,16 +65,16 @@ export default async function AccountSettingsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Column: Identity Snapshot */}
           <div className="lg:col-span-4 space-y-6">
-            <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-6 flex flex-col items-center text-center space-y-3 shadow-xs">
-              <div className="w-[84px] h-[84px] rounded-full bg-[#19A7D5] text-[#12191C] flex items-center justify-center font-bold text-[36px] select-none">
+            <div className="bg-white border border-border-default rounded-2xl p-6 flex flex-col items-center text-center space-y-3 shadow-xs">
+              <div className="w-[84px] h-[84px] rounded-full bg-cyan-500 text-on-brand flex items-center justify-center font-bold text-[36px] select-none">
                 {avatarLetter}
               </div>
 
               <div className="space-y-1">
-                <h3 className="text-[18px] font-bold text-[#1C1713]">
+                <h3 className="text-[18px] font-bold text-ink-900">
                   {fullName}
                 </h3>
-                <p className="text-xs text-[#817B77]">
+                <p className="text-xs text-text-500">
                   {profile?.student_number || "Student Account"} · {profile?.program || "BS CpE"}
                 </p>
               </div>
@@ -86,18 +86,18 @@ export default async function AccountSettingsPage() {
               </div>
 
               {/* Locked credentials summary */}
-              <div className="w-full pt-4 border-t border-[#EEECEA] text-left text-xs space-y-2 text-[#514B47]">
+              <div className="w-full pt-4 border-t border-divider text-left text-xs space-y-2 text-text-600">
                 <div>
-                  <span className="text-[#817B77] block text-[10px] uppercase font-bold">Institutional Email</span>
-                  <span className="font-medium text-[#1C1713] truncate block">{profile?.email}</span>
+                  <span className="text-text-500 block text-[10px] uppercase font-bold">Institutional Email</span>
+                  <span className="font-medium text-ink-900 truncate block">{profile?.email}</span>
                 </div>
                 <div>
-                  <span className="text-[#817B77] block text-[10px] uppercase font-bold">CIT-U Student Number</span>
-                  <span className="font-mono font-medium text-[#1C1713]">{profile?.student_number || "—"}</span>
+                  <span className="text-text-500 block text-[10px] uppercase font-bold">CIT-U Student Number</span>
+                  <span className="font-mono font-medium text-ink-900">{profile?.student_number || "—"}</span>
                 </div>
                 <div>
-                  <span className="text-[#817B77] block text-[10px] uppercase font-bold">Academic Program</span>
-                  <span className="font-medium text-[#1C1713]">{profile?.program || "BS Computer Engineering"}</span>
+                  <span className="text-text-500 block text-[10px] uppercase font-bold">Academic Program</span>
+                  <span className="font-medium text-ink-900">{profile?.program || "BS Computer Engineering"}</span>
                 </div>
               </div>
             </div>
@@ -106,21 +106,21 @@ export default async function AccountSettingsPage() {
           {/* Right Column: Edit Profile & Password Form */}
           <div className="lg:col-span-8 space-y-6">
             {/* Personal Information Form */}
-            <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-6 space-y-4 shadow-xs">
-              <div className="flex items-center gap-2 pb-3 border-b border-[#EEECEA]">
-                <User className="w-4 h-4 text-[#0087B5]" />
-                <h3 className="text-[16px] font-bold text-[#1C1713]">Personal Information</h3>
+            <div className="bg-white border border-border-default rounded-2xl p-6 space-y-4 shadow-xs">
+              <div className="flex items-center gap-2 pb-3 border-b border-divider">
+                <User className="w-4 h-4 text-cyan-600" />
+                <h3 className="text-[16px] font-bold text-ink-900">Personal Information</h3>
               </div>
               <EditProfileForm profile={profile} />
             </div>
 
             {/* Change Password Form */}
-            <div className="bg-white border border-[#DEDBD8] rounded-[16px] p-6 space-y-4 shadow-xs">
-              <div className="flex items-center gap-2 pb-3 border-b border-[#EEECEA]">
-                <KeyRound className="w-4 h-4 text-[#0087B5]" />
-                <h3 className="text-[16px] font-bold text-[#1C1713]">Security & Password</h3>
+            <div className="bg-white border border-border-default rounded-2xl p-6 space-y-4 shadow-xs">
+              <div className="flex items-center gap-2 pb-3 border-b border-divider">
+                <KeyRound className="w-4 h-4 text-cyan-600" />
+                <h3 className="text-[16px] font-bold text-ink-900">Security & Password</h3>
               </div>
-              <p className="text-xs text-[#817B77]">
+              <p className="text-xs text-text-500">
                 Update your account password. Make sure it is at least 8 characters long.
               </p>
               <ChangePasswordForm />

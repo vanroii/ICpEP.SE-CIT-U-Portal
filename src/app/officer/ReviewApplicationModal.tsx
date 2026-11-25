@@ -67,7 +67,7 @@ export function ReviewApplicationModal({
           <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#f0eeeb]">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-[#e3f6fc] text-[#0a7db0]">
+                <div className="p-2 rounded-xl bg-cyan-50 text-[#0a7db0]">
                   <Award className="w-5 h-5" />
                 </div>
                 <h3 className="font-bold text-base text-[#1b1613]">
@@ -83,7 +83,7 @@ export function ReviewApplicationModal({
             </div>
 
             {/* Applicant details */}
-            <div className="rounded-xl bg-[#f8f8f7] p-4 text-xs space-y-1.5 border border-[#e0dedb]">
+            <div className="rounded-xl bg-surface-page p-4 text-xs space-y-1.5 border border-[#e0dedb]">
               <div className="flex justify-between">
                 <span className="text-[#8c8785]">Applicant:</span>
                 <span className="font-bold text-[#1b1613]">

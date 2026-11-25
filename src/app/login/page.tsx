@@ -17,20 +17,20 @@ function LoginForm() {
       {/* Mobile Header Logo */}
       <div className="lg:hidden flex items-center gap-3 pb-2">
         <LogoMark size={36} />
-        <span className="text-[17px] font-bold text-[#1C1713]">ICpEP.SE CIT-U</span>
+        <span className="text-[17px] font-bold text-ink-900">ICpEP.SE CIT-U</span>
       </div>
 
       <div className="space-y-2">
-        <h1 className="text-[32px] leading-[40px] font-bold text-[#1C1713] tracking-[-0.6px]">
+        <h1 className="text-[32px] leading-[40px] font-bold text-ink-900 tracking-[-0.6px]">
           Log in
         </h1>
-        <p className="text-[15px] leading-[24px] text-[#817B77]">
+        <p className="text-[15px] leading-[24px] text-text-500">
           Enter your email or student number and password.
         </p>
       </div>
 
       {state?.error && (
-        <div className="p-3.5 bg-[#FEE2E2] border border-[#FCA5A5] rounded-[10px] text-[13px] text-[#B91C1C]">
+        <div className="p-3.5 bg-status-danger-bg border border-status-danger-border rounded-[10px] text-[13px] text-status-danger">
           {state.error}
         </div>
       )}
@@ -40,7 +40,7 @@ function LoginForm() {
 
         {/* Email or Student number */}
         <div className="space-y-2">
-          <label className="block text-[14px] font-semibold text-[#3D3733]">
+          <label className="block text-[14px] font-semibold text-text-700">
             Email or student number
           </label>
           <input
@@ -48,19 +48,19 @@ function LoginForm() {
             type="text"
             required
             placeholder="name@cit.edu or 23-1042-118"
-            className="w-full h-[46px] px-4 rounded-[10px] bg-white border border-[#C9C5C2] text-[15px] text-[#1C1713] placeholder-[#928C88] outline-none focus:border-[#19A7D5] focus:ring-2 focus:ring-[#19A7D5]/20"
+            className="w-full h-[46px] px-4 rounded-[10px] bg-white border border-border-input text-[15px] text-ink-900 placeholder-text-400 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
           />
         </div>
 
         {/* Password */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <label className="block text-[14px] font-semibold text-[#3D3733]">
+            <label className="block text-[14px] font-semibold text-text-700">
               Password
             </label>
             <Link
               href="/forgot-password"
-              className="text-[13px] font-semibold text-[#0087B5] hover:underline"
+              className="text-[13px] font-semibold text-cyan-600 hover:underline"
             >
               Forgot password?
             </Link>
@@ -70,7 +70,7 @@ function LoginForm() {
             type="password"
             required
             placeholder="••••••••"
-            className="w-full h-[46px] px-4 rounded-[10px] bg-white border border-[#C9C5C2] text-[15px] text-[#1C1713] placeholder-[#928C88] outline-none focus:border-[#19A7D5] focus:ring-2 focus:ring-[#19A7D5]/20"
+            className="w-full h-[46px] px-4 rounded-[10px] bg-white border border-border-input text-[15px] text-ink-900 placeholder-text-400 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
           />
         </div>
 
@@ -81,11 +81,11 @@ function LoginForm() {
             id="keepSignedIn"
             checked={keepSignedIn}
             onChange={(e) => setKeepSignedIn(e.target.checked)}
-            className="w-[18px] h-[18px] rounded-[5px] border border-[#C9C5C2] text-[#19A7D5] focus:ring-[#19A7D5] cursor-pointer"
+            className="w-[18px] h-[18px] rounded-[5px] border border-border-input text-cyan-500 focus:ring-cyan-500 cursor-pointer"
           />
           <label
             htmlFor="keepSignedIn"
-            className="text-[13px] text-[#514B47] cursor-pointer select-none"
+            className="text-[13px] text-text-600 cursor-pointer select-none"
           >
             Keep me signed in
           </label>
@@ -95,7 +95,7 @@ function LoginForm() {
         <button
           type="submit"
           disabled={pending}
-          className="w-full h-[43px] rounded-[8px] bg-[#19A7D5] hover:bg-[#1695bf] active:bg-[#1383a8] text-[#12191C] text-[14px] font-semibold transition-colors flex items-center justify-center cursor-pointer disabled:opacity-50 mt-2"
+          className="w-full h-[43px] rounded-[8px] bg-cyan-500 hover:bg-[#1695bf] active:bg-[#1383a8] text-on-brand text-[14px] font-semibold transition-colors flex items-center justify-center cursor-pointer disabled:opacity-50 mt-2"
         >
           {pending ? "Logging in..." : "Log in"}
         </button>
@@ -103,25 +103,25 @@ function LoginForm() {
 
       {/* Or divider */}
       <div className="flex items-center gap-3 py-1">
-        <div className="flex-1 h-[1px] bg-[#DEDBD8]" />
-        <span className="text-[13px] text-[#928C88]">or</span>
-        <div className="flex-1 h-[1px] bg-[#DEDBD8]" />
+        <div className="flex-1 h-[1px] bg-border-default" />
+        <span className="text-[13px] text-text-400">or</span>
+        <div className="flex-1 h-[1px] bg-border-default" />
       </div>
 
       {/* Continue as visitor */}
       <Link
         href="/"
-        className="w-full h-[46px] rounded-[8px] border-[1.5px] border-[#0087B5] text-[#0087B5] hover:bg-[#E3F6FC] text-[14px] font-semibold transition-colors flex items-center justify-center"
+        className="w-full h-[46px] rounded-[8px] border-[1.5px] border-cyan-600 text-cyan-600 hover:bg-cyan-50 text-[14px] font-semibold transition-colors flex items-center justify-center"
       >
         Continue as visitor
       </Link>
 
       {/* New here */}
       <div className="flex items-center justify-center gap-1.5 pt-2 text-[14px]">
-        <span className="text-[#817B77]">New here?</span>
+        <span className="text-text-500">New here?</span>
         <Link
           href="/register"
-          className="font-semibold text-[#0087B5] hover:underline"
+          className="font-semibold text-cyan-600 hover:underline"
         >
           Create an account
         </Link>
@@ -132,7 +132,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-[#F8F8F7]">
+    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-surface-page">
       {/* Brand Panel (620px, dark gradient, §4.3) */}
       <div className="hidden lg:flex w-[620px] hero-gradient p-[56px_64px] flex-col justify-between shrink-0 text-white select-none">
         {/* Logo */}
@@ -142,7 +142,7 @@ export default function LoginPage() {
             <span className="text-[17px] font-bold text-white tracking-[-0.2px]">
               ICpEP.SE
             </span>
-            <span className="text-[12px] font-medium text-[#AAA4A0] mt-1">
+            <span className="text-[12px] font-medium text-text-mute mt-1">
               CIT-U Chapter
             </span>
           </div>
@@ -157,22 +157,22 @@ export default function LoginPage() {
           </h2>
 
           <div className="space-y-5 pt-2">
-            <div className="flex items-center gap-3 text-[16px] leading-[24px] text-[#D1CECB]">
-              <div className="w-[22px] h-[22px] rounded-full bg-[#19A7D5]/20 flex items-center justify-center text-[#19A7D5] shrink-0 font-bold text-xs">
+            <div className="flex items-center gap-3 text-[16px] leading-[24px] text-text-dark">
+              <div className="w-[22px] h-[22px] rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-500 shrink-0 font-bold text-xs">
                 ✓
               </div>
               <span>Events, news, and announcements in one place</span>
             </div>
 
-            <div className="flex items-center gap-3 text-[16px] leading-[24px] text-[#D1CECB]">
-              <div className="w-[22px] h-[22px] rounded-full bg-[#19A7D5]/20 flex items-center justify-center text-[#19A7D5] shrink-0 font-bold text-xs">
+            <div className="flex items-center gap-3 text-[16px] leading-[24px] text-text-dark">
+              <div className="w-[22px] h-[22px] rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-500 shrink-0 font-bold text-xs">
                 ✓
               </div>
               <span>A dashboard made for your role</span>
             </div>
 
-            <div className="flex items-center gap-3 text-[16px] leading-[24px] text-[#D1CECB]">
-              <div className="w-[22px] h-[22px] rounded-full bg-[#19A7D5]/20 flex items-center justify-center text-[#19A7D5] shrink-0 font-bold text-xs">
+            <div className="flex items-center gap-3 text-[16px] leading-[24px] text-text-dark">
+              <div className="w-[22px] h-[22px] rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-500 shrink-0 font-bold text-xs">
                 ✓
               </div>
               <span>Messages and notifications, always up to date</span>
@@ -181,14 +181,14 @@ export default function LoginPage() {
         </div>
 
         {/* Bottom note */}
-        <p className="text-[14px] text-[#D1CECB]">
+        <p className="text-[14px] text-text-dark">
           Visitors can browse public events and news without logging in.
         </p>
       </div>
 
       {/* Form Panel (820px) */}
       <div className="flex-1 flex items-center justify-center p-5 sm:p-12 min-h-screen lg:min-h-0">
-        <Suspense fallback={<div className="text-sm text-[#817B77]">Loading login form...</div>}>
+        <Suspense fallback={<div className="text-sm text-text-500">Loading login form...</div>}>
           <LoginForm />
         </Suspense>
       </div>
