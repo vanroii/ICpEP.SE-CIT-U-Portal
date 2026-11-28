@@ -33,9 +33,8 @@ export default async function NavBar() {
             .eq("is_read", false),
           supabase
             .from("message_recipients")
-            .select("message_id, messages!inner(message_type)", { count: "exact", head: true })
+            .select("message_id", { count: "exact", head: true })
             .eq("is_read", false)
-            .eq("messages.message_type", "internal")
             .is("deleted_at", null),
         ]);
 

@@ -15,7 +15,10 @@ import {
   Award,
   Clock,
   Shield,
+  BarChart2,
+  SlidersHorizontal,
   Users,
+  Sparkles,
 } from "lucide-react";
 import { ROLE_LABELS, type RoleCode } from "@/lib/roles";
 
@@ -139,9 +142,48 @@ export default async function FacultyPortalPage({
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <CreateEventModal />
-            <CreatePostModal />
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Tab switchers */}
+            <div className="flex items-center gap-1.5 bg-surface-50 border border-border-default p-1 rounded-[10px]">
+              <Link
+                href="/faculty"
+                className={`h-8 px-3 rounded-[7px] font-semibold text-xs flex items-center gap-1.5 transition-colors ${
+                  isFeedTab
+                    ? "bg-cyan-500 text-on-brand shadow-xs"
+                    : "text-text-500 hover:text-ink-900 hover:bg-white"
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Home Feed
+              </Link>
+              <Link
+                href="/faculty?tab=operations"
+                className={`h-8 px-3 rounded-[7px] font-semibold text-xs flex items-center gap-1.5 transition-colors ${
+                  isOperationsTab
+                    ? "bg-cyan-500 text-on-brand shadow-xs"
+                    : "text-text-500 hover:text-ink-900 hover:bg-white"
+                }`}
+              >
+                <Users className="w-3.5 h-3.5" />
+                Student Masterlist
+              </Link>
+              <Link
+                href="/faculty?tab=analytics"
+                className={`h-8 px-3 rounded-[7px] font-semibold text-xs flex items-center gap-1.5 transition-colors ${
+                  isAnalyticsTab
+                    ? "bg-cyan-500 text-on-brand shadow-xs"
+                    : "text-text-500 hover:text-ink-900 hover:bg-white"
+                }`}
+              >
+                <BarChart2 className="w-3.5 h-3.5" />
+                Analytics &amp; Reports
+              </Link>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <CreateEventModal />
+              <CreatePostModal />
+            </div>
           </div>
         </div>
 

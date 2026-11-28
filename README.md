@@ -93,14 +93,10 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
 ### 2. Run Database Migrations & Seed
 1. Open your Supabase Dashboard → **SQL Editor**.
-2. Run every SQL migration in `supabase/migrations/` in numeric order (`0001` through `0010`).
-   Migration `0008_mail_attachments_schedule.sql` creates the private mail-attachment bucket,
-   access policies, and a one-minute `pg_cron` job for scheduled delivery. If the migration
-   reports that `pg_cron` could not be enabled, enable the `pg_cron` extension in Supabase
-   and rerun the migration; it creates the delivery job automatically.
-   Migration `0010_separate_mail_and_internal_messages.sql` keeps `/mail` separate from `/inbox`.
-3. Run `supabase/seed.sql` to populate current school years, events, posts, and settings.
-4. Under **Authentication → URL Configuration**, add `http://localhost:3000/auth/callback` to Redirect URLs.
+2. Run `supabase/migrations/0001_schema.sql` top to bottom.
+3. Run `supabase/migrations/0002_fixes_and_helpers.sql`, then `0003_fix_faculty_role.sql` and `0004_role_assignment_masterlists.sql`.
+4. Run `supabase/seed.sql` to populate current school years, events, posts, and settings.
+5. Under **Authentication → URL Configuration**, add `http://localhost:3000/auth/callback` to Redirect URLs.
 
 After applying database migrations in an existing project, allow PostgREST's schema cache to reload. If an RPC is still reported as missing, run `NOTIFY pgrst, 'reload schema';` in the Supabase SQL Editor and retry after a short wait.
 

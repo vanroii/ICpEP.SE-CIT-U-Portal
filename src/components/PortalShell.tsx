@@ -58,7 +58,6 @@ function getNavItems(role: PortalRole): NavItem[] {
       { label: "Analytics and Reports", href: "/officer?tab=analytics",     icon: BarChart2,         tab: "analytics" },
       { label: "Events",                href: "/events",                    icon: Calendar },
       { label: "Announcements",         href: "/news",                      icon: FileText },
-      { label: "Mail",                  href: "/mail",                      icon: Mail     },
       { label: "Profile",               href: "/profile",                   icon: User     },
     ];
   }
@@ -69,7 +68,6 @@ function getNavItems(role: PortalRole): NavItem[] {
       { label: "Analytics and Reports", href: "/faculty?tab=analytics",     icon: BarChart2,         tab: "analytics" },
       { label: "Events",                href: "/events",                    icon: Calendar },
       { label: "Announcements",         href: "/news",                      icon: FileText },
-      { label: "Mail",                  href: "/mail",                      icon: Mail     },
       { label: "Profile",               href: "/profile",                   icon: User     },
     ];
   }
@@ -78,7 +76,6 @@ function getNavItems(role: PortalRole): NavItem[] {
     { label: "Home",          href: "/student",       icon: Home     },
     { label: "Events",        href: "/events",        icon: Calendar },
     { label: "Announcements", href: "/news",          icon: FileText },
-    { label: "Mail",          href: "/mail",          icon: Mail     },
     { label: "Profile",       href: "/profile",       icon: User     },
   ];
 }
@@ -205,10 +202,9 @@ export function PortalShell({
             .eq("is_read", false),
           supabase
             .from("message_recipients")
-            .select("message_id, messages!inner(message_type)", { count: "exact", head: true })
+            .select("message_id", { count: "exact", head: true })
             .eq("recipient_id", user.id)
             .eq("is_read", false)
-            .eq("messages.message_type", "internal")
             .is("deleted_at", null),
         ]);
 

@@ -76,10 +76,9 @@ export default async function StudentHomePage() {
           .limit(4),
         supabase
           .from("message_recipients")
-          .select("message_id, messages!inner(message_type)", { count: "exact", head: true })
+          .select("message_id", { count: "exact", head: true })
           .eq("recipient_id", user.id)
           .eq("is_read", false)
-          .eq("messages.message_type", "internal")
           .is("deleted_at", null),
       ]);
 
