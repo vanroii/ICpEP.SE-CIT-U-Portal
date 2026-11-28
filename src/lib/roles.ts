@@ -33,4 +33,5 @@ export const AREA_ACCESS: Record<string, RoleCode[]> = {
   "/notifications": ["non_member", "member", "officer", "faculty", "admin"],
   "/profile": ["non_member", "member", "officer", "faculty", "admin"],
   "/settings": ["non_member", "member", "officer", "faculty", "admin"],
+  "/mail": ["officer", "member", "faculty", "admin"],
 };
