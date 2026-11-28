@@ -62,10 +62,11 @@ export function QuickPopoverPanel({
               .select(
                 `
                 is_read, message_id,
-                messages(id, subject, body, sent_at, sender_id, parent_id)
+                messages!inner(id, subject, body, sent_at, sender_id, parent_id, message_type)
               `
               )
               .eq("recipient_id", user.id)
+              .eq("messages.message_type", "internal")
               .is("deleted_at", null)
               .order("message_id", { ascending: false })
               .limit(40),
@@ -73,11 +74,12 @@ export function QuickPopoverPanel({
               .from("messages")
               .select(
                 `
-                id, subject, body, sent_at, sender_id, parent_id,
+                id, subject, body, sent_at, sender_id, parent_id, message_type,
                 message_recipients(recipient_id)
               `
               )
               .eq("sender_id", user.id)
+              .eq("message_type", "internal")
               .is("sender_deleted_at", null)
               .order("sent_at", { ascending: false })
               .limit(40),
